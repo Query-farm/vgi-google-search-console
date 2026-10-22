@@ -1,0 +1,53 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
+[Semantic Versioning](https://semver.org/).
+
+## Unreleased
+
+- Browser sign-in at ATTACH through Query Farm's shared Desktop OAuth app,
+  with PKCE, a loopback callback and separate in-memory authorization for each
+  attachment. Logins expire after an hour idle or twelve hours total and are
+  cleared by worker exit or a detach RPC; no Keychain or credential files.
+- Query Farm supplies the app registration in `oauth_app.py`; end users sign
+  in with their own Google accounts without creating or configuring an app.
+- Disable local OAuth on all shared transports and restrict ADC there to an
+  explicit `--allow-adc` operator flag.
+
+## 0.1.0
+
+First release: read-only Google Search Console for DuckDB.
+
+### Added
+
+- **Search performance.** `search_analytics()` runs the API's
+  `searchAnalytics.query` with typed columns decided at bind time (`DATE` /
+  `TIMESTAMP WITH TIME ZONE` calendar dimensions, `BIGINT` clicks and
+  impressions, `DOUBLE` CTR and position), every search type, aggregation type
+  and data state, a JSON `filters` argument, `max_rows` and an opt-in
+  `cache_ttl`. Rows stream one API page per tick.
+- **Every property at once.** `search_analytics('')` and `sitemaps('')` walk
+  every readable property, stamping `site_url` on each row; a predicate on
+  `site_url` visits only the properties it names.
+- **Sites.** The `sites` table (and `all_sites()` behind it), with the access
+  level and whether each is a domain or URL-prefix property.
+- **Sitemaps.** `sitemaps()` with status, error and warning counts, contents by
+  type, and `sitemap_index` to look inside a sitemap index.
+- **URL inspection.** `url_inspection()`, a blended function that works as a
+  literal call and under a correlated `LATERAL`, with per-URL caching.
+- **Credentials.** A `google_search_console` DuckDB secret type taking a
+  service-account key, an OAuth refresh-token grant or an access token, with
+  Application Default Credentials as a stdio-only fallback.
+- **ATTACH options.** `credentials` (`auto` / `secret`), `page_size` and
+  `api_url`, validated at ATTACH. The worker reads no environment variables of
+  its own; the HTTP server's ADC fallback is an operator-only `--allow-adc`
+  flag.
+- **Pushdown.** `=` on `page`, `query`, `country` and `device` becomes an API
+  filter and range predicates on `date` narrow the date range; every pushed
+  predicate is also applied by the worker.
+- **Read-only guarantees.** One HTTP chokepoint with a GET + two-read-RPC
+  allow-list, the `webmasters.readonly` scope only, and site URLs confined to a
+  single encoded path segment, all held by `tests/test_readonly_guard.py`.
+- **Tests and CI.** Unit tests, an offline SQL end-to-end tier against a fake
+  Search Console API, a live tier, ruff, mypy `--strict` and vgi-lint.

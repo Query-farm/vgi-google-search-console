@@ -1,0 +1,26 @@
+vgi-google-search-console
+Copyright (c) 2026 Query Farm LLC - https://query.farm
+
+This product is licensed under the MIT License. See LICENSE.
+
+------------------------------------------------------------------------------
+
+Google Search Console data
+
+This software reads the Google Search Console API on behalf of the credential it
+is given. The search data it returns belongs to the owner of each Search Console
+property, is not covered by the MIT License above, and is accessed subject to
+the Google APIs Terms of Service:
+
+    https://developers.google.com/terms
+
+Neither this software nor Query Farm LLC is affiliated with, endorsed by, or
+sponsored by Google LLC. "Google Search Console" is a trademark of Google LLC
+and is used here only to describe what this software connects to.
+
+------------------------------------------------------------------------------
+
+Third-party dependencies
+
+google-auth (Apache-2.0), httpx (BSD-3-Clause), pyarrow (Apache-2.0) and
+vgi-python are used under their own licenses. No GPL or AGPL code is included.

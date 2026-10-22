@@ -1,0 +1,88 @@
+name: Live
+
+# The tiers that talk to real Google Search Console. They need a credential and
+# spend API quota from the test property (URL Inspection allows 2,000 calls a
+# day per property), so they run on a schedule and on demand rather than on
+# every push.
+#
+# Repository configuration:
+#   secrets.GSC_SERVICE_ACCOUNT_JSON  the JSON key of a service account that has
+#                                     been added as a user of the test property
+#   vars.GSC_TEST_SITE                site_url of that property (optional; the
+#                                     first readable property is used otherwise)
+#
+# Without the secret both jobs skip cleanly, so forks and fresh clones stay green.
+
+on:
+  schedule:
+    - cron: "41 7 * * *"
+  workflow_dispatch:
+
+concurrency:
+  # Never two at once: they share the property's per-minute and daily quota.
+  group: gsc-live
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  UV_NO_SOURCES: "1"
+
+jobs:
+  live:
+    name: Live tests (real ATTACH against Search Console)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VGI_GSC_TEST_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+      VGI_GSC_TEST_SITE: ${{ vars.GSC_TEST_SITE }}
+    steps:
+      - uses: actions/checkout@v5
+        if: env.VGI_GSC_TEST_SERVICE_ACCOUNT_JSON != ''
+      - uses: astral-sh/setup-uv@v6
+        if: env.VGI_GSC_TEST_SERVICE_ACCOUNT_JSON != ''
+        with:
+          enable-cache: true
+      - if: env.VGI_GSC_TEST_SERVICE_ACCOUNT_JSON != ''
+        run: uv sync --no-sources --frozen
+      - name: Live tests
+        if: env.VGI_GSC_TEST_SERVICE_ACCOUNT_JSON != ''
+        run: uv run --no-sources pytest -q -m live
+      - name: Skipped — no credential configured
+        if: env.VGI_GSC_TEST_SERVICE_ACCOUNT_JSON == ''
+        run: echo "::notice::GSC_SERVICE_ACCOUNT_JSON is not set; live tests skipped."
+
+  behavioural:
+    name: vgi-lint (executes every example)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: live
+    env:
+      GSC_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: actions/checkout@v5
+        if: env.GSC_KEY != ''
+      - uses: astral-sh/setup-uv@v6
+        if: env.GSC_KEY != ''
+        with:
+          enable-cache: true
+      - if: env.GSC_KEY != ''
+        run: uv sync --no-sources --frozen
+      # vgi-lint attaches the worker without a DuckDB secret, so the worker
+      # authenticates through Application Default Credentials: the key is written
+      # to a file and GOOGLE_APPLICATION_CREDENTIALS points at it.
+      - name: Write the service-account key for ADC
+        if: env.GSC_KEY != ''
+        run: |
+          umask 077
+          printf '%s' "$GSC_KEY" > "$RUNNER_TEMP/gsc-key.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/gsc-key.json" >> "$GITHUB_ENV"
+      - name: vgi-lint (structural + behavioural)
+        if: env.GSC_KEY != ''
+        run: >
+          uv run --no-sources --with vgi-lint-check==0.82.0 vgi-lint lint "uv run --no-sources gsc_worker.py"
+          --execute-concurrency 1 --no-check-links --audit-waivers --fail-on error
+      - name: Remove the key
+        if: always() && env.GSC_KEY != ''
+        run: rm -f "$RUNNER_TEMP/gsc-key.json"

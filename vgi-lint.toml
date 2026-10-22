@@ -1,0 +1,20 @@
+# vgi-lint configuration for the Google Search Console worker.
+#
+#   vgi-lint lint --audit-waivers
+#
+# re-runs the rules these waivers silence and fails if one has stopped buying
+# anything, so a waiver cannot outlive the reason it was granted.
+
+location = "uv run --no-sources gsc_worker.py"
+select = ["ALL"]
+fail_on = "error"
+
+ignore = [
+  { code = "VGI311", kind = "tooling-bug", reason = """\
+The one parameterless scan here IS exposed as a table: all_sites backs `sites`. \
+The rule looks for a table whose name matches the function's, so it cannot see \
+the link. The names differ deliberately — a function and a table cannot share \
+one name in a schema, so the scan takes the `all_` prefix and the table keeps \
+the name consumers actually type.\
+""" },
+]

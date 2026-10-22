@@ -1,0 +1,122 @@
+[project]
+name = "vgi-google-search-console"
+dynamic = ["version"]
+description = "A read-only VGI (Vector Gateway Interface) worker exposing Google Search Console search performance, sitemaps and URL inspection to DuckDB/SQL"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Query Farm", email = "hello@query.farm" }]
+keywords = ["vgi", "duckdb", "arrow", "google-search-console", "seo", "search-analytics", "sql"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Internet :: WWW/HTTP :: Site Management",
+    "Typing :: Typed",
+]
+requires-python = ">=3.13"
+dependencies = [
+    # `haybarn` is not optional: vgi-python binds a pushed-down WHERE clause with
+    # an in-process DuckDB engine, and without one every filtered scan fails at
+    # runtime with "No DuckDB-compatible engine is installed".
+    # 0.46 requires wire 2.2, but Haybarn 1.5.5rc1's extension uses wire 2.1.
+    # Keep the SDK compatible with its pinned filter-evaluation engine.
+    "vgi-python[http,haybarn]>=0.45.0,<0.46",
+    "httpx>=0.27",
+    # Token minting only — service-account JWT assertions, refresh-token grants
+    # and Application Default Credentials discovery. Its own HTTP calls are
+    # routed through an httpx adapter in `gsc_api`, so `requests` is never used.
+    "google-auth>=2.30",
+    "oauthlib>=3.3.1",
+]
+
+[project.optional-dependencies]
+serve = ["vgi-python[http,haybarn,oauth]>=0.45.0,<0.46", "vgi-rpc[sentry]>=0.52.0"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    # Pinned to a minor: the rule set is version-dependent, so an unpinned ruff
+    # means CI can fail on a commit that was clean locally.
+    "ruff>=0.16,<0.17",
+    "mypy>=1.18",
+    # Drives a real ATTACH in tests/test_end_to_end.py.
+    "haybarn>=1.5.5rc1",
+    # DuckDB materializes TIMESTAMP WITH TIME ZONE through pytz.
+    "pytz>=2024.1",
+    "pyyaml>=6.0.3",
+]
+
+[project.urls]
+Homepage = "https://query.farm"
+Documentation = "https://query.farm/vgi/"
+Repository = "https://github.com/Query-farm/vgi-google-search-console"
+Issues = "https://github.com/Query-farm/vgi-google-search-console/issues"
+
+[project.scripts]
+vgi-google-search-console = "vgi_google_search_console.worker:main"
+vgi-google-search-console-http = "vgi_google_search_console.worker:main_http"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "vgi_google_search_console/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["vgi_google_search_console"]
+
+[tool.uv]
+# The e2e tier needs a pre-release haybarn build that ships the vgi extension.
+prerelease = "if-necessary-or-explicit"
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+
+# Selected explicitly rather than left to the default set, which changes between
+# ruff releases, so CI and a developer's shell reach the same conclusion.
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "D", "RUF", "PL", "PT", "RET", "TID"]
+ignore = [
+    "D203",    # one-blank-line-before-class: conflicts with D211
+    "D213",    # multi-line-summary-second-line: conflicts with D212
+    "D105",    # magic methods are self-describing
+    "D107",    # __init__ is documented on the class
+    "PLR0913", # VGI process()/emit helpers legitimately take many keyword args
+    "PLR2004", # HTTP status codes and limits read better inline
+    # VGI functions are declared through a nested `Meta` class whose list-valued
+    # attributes (examples, required_secrets) the framework reads once at import.
+    # They are configuration, documented by the function's own docstring.
+    "RUF012",
+    "D106",
+    "RUF001",  # prose uses typographic punctuation deliberately
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "PLR2004", "PLC0415", "PLR0911", "PLR0912"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+packages = ["vgi_google_search_console"]
+
+[[tool.mypy.overrides]]
+module = ["google.*", "haybarn.*", "oauthlib.*", "pyarrow", "pyarrow.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Live tests hit the real Search Console API; opt in with `pytest -m live`.
+addopts = "-m 'not live'"
+markers = ["live: hits the real Search Console API over the network (needs credentials)"]

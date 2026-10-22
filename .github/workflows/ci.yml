@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # pyproject deliberately carries no `[tool.uv.sources]`, so a fresh clone
+  # resolves from PyPI. This pins that shut: if a local path source is ever
+  # added, CI still proves the *published* dependencies are sufficient.
+  UV_NO_SOURCES: "1"
+
+jobs:
+  check:
+    name: Lint, types, tests (incl. offline SQL end-to-end)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --no-sources --frozen
+      - name: Ruff (lint)
+        run: uv run --no-sources ruff check .
+      - name: Ruff (format)
+        run: uv run --no-sources ruff format --check .
+      - name: Mypy (strict)
+        run: uv run --no-sources mypy
+      # Includes tests/test_end_to_end.py: the real worker attached from DuckDB
+      # (Haybarn ships the vgi extension) against tests/fake_gsc.py over a real
+      # socket. No credentials and no Google traffic, so it runs on every push.
+      - name: Tests
+        run: uv run --no-sources pytest -q
+      - name: Entry points start without the dev checkout's environment
+        run: |
+          uv run --no-project gsc_worker.py --help > /dev/null
+          uv run --no-project serve.py --help > /dev/null
+
+  catalog:
+    name: Catalog metadata (vgi-lint, structural)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --no-sources --frozen
+      # Structural tier only: it inspects the catalog without running a query,
+      # so no credentials are needed. The behavioural tier executes every
+      # example against real Search Console and runs in live.yml.
+      # Use the project's engine so the client and worker wire versions match.
+      - name: vgi-lint (structural)
+        run: >
+          uv run --no-sources --with vgi-lint-check==0.82.0 vgi-lint lint "uv run --no-sources gsc_worker.py"
+          --no-execute --no-check-links --audit-waivers --fail-on warning

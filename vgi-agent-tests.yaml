@@ -1,0 +1,98 @@
+# Private graders for the agent-suitability suite.
+#
+# The catalog publishes only each task's name and prompt (vgi.agent_test_tasks in
+# vgi_google_search_console/worker.py), so an agent being evaluated cannot read
+# the answers. vgi-lint merges these graders back in by name; it finds this file
+# beside vgi-lint.toml. tests/test_catalog.py keeps the two lists in step, and
+# tests/test_end_to_end.py runs every reference query.
+#
+# Every task is phrased across "my properties" and its reference query passes ''
+# as the site, so the suite runs against any account without naming a site. An
+# agent that instead reads the sites table and queries each property by name has
+# answered the same question.
+
+tasks:
+- name: find_sites
+  reference_sql: SELECT site_url, property_type, permission_level FROM gsc.main.sites ORDER BY site_url
+  success_criteria: Lists properties from the sites table (or all_sites) with their permission level.
+  unordered: true
+- name: daily_clicks
+  reference_sql: >-
+    SELECT site_url, date, clicks, impressions FROM gsc.main.search_analytics('', dimensions => ['date'],
+    start_date => '7daysAgo', end_date => 'today', data_state => 'all') ORDER BY site_url, date
+  success_criteria: >-
+    Uses search_analytics() with the date dimension over a 7-day range. Either data_state is acceptable,
+    as long as missing recent days are explained when 'final' is used.
+  unordered: true
+- name: total_clicks_not_summed
+  reference_sql: SELECT site_url, clicks FROM gsc.main.search_analytics('') ORDER BY site_url
+  success_criteria: >-
+    Requests the total with no dimensions, or sums a date-only breakdown. Summing rows grouped by query
+    or page is wrong — rare queries are withheld, and a search can count for several pages.
+  unordered: true
+- name: average_position
+  reference_sql: SELECT site_url, position FROM gsc.main.search_analytics('') ORDER BY site_url
+  success_criteria: >-
+    Reads position from a query with no dimensions, or computes an impression-weighted average. A plain
+    avg(position) over rows is wrong.
+  unordered: true
+- name: top_queries
+  reference_sql: >-
+    SELECT site_url, query, clicks FROM gsc.main.search_analytics('', dimensions => ['query'], max_rows
+    => 1000) ORDER BY clicks DESC LIMIT 10
+  success_criteria: Groups by the query dimension and orders by clicks.
+  unordered: true
+- name: top_pages
+  reference_sql: >-
+    SELECT site_url, page, impressions FROM gsc.main.search_analytics('', dimensions => ['page'], max_rows
+    => 1000) ORDER BY impressions DESC LIMIT 10
+  success_criteria: Groups by the page dimension and orders by impressions.
+  unordered: true
+- name: filter_on_hidden_dimension
+  reference_sql: >-
+    SELECT site_url, device, clicks FROM gsc.main.search_analytics('', dimensions => ['device'], filters
+    => '[{"dimension": "country", "operator": "equals", "expression": "usa"}]') ORDER BY site_url, clicks
+    DESC
+  success_criteria: >-
+    Restricts to country 'usa' — the lowercase three-letter code — either through the filters argument,
+    or by adding country as a dimension and filtering in SQL, and breaks clicks down by device.
+  unordered: true
+- name: fresh_data
+  reference_sql: >-
+    SELECT site_url, clicks FROM gsc.main.search_analytics('', start_date => 'yesterday', end_date =>
+    'yesterday', data_state => 'all')
+  success_criteria: >-
+    Passes data_state => 'all'. With the default 'final' state yesterday has no data yet, so an empty
+    or zero answer is wrong.
+  unordered: true
+- name: image_search
+  reference_sql: >-
+    SELECT site_url, query, clicks FROM gsc.main.search_analytics('', dimensions => ['query'], search_type
+    => 'image', max_rows => 1000) ORDER BY clicks DESC LIMIT 10
+  success_criteria: Passes search_type => 'image' rather than reading the default web results.
+  unordered: true
+- name: sitemap_health
+  reference_sql: >-
+    SELECT site_url, path, errors, warnings FROM gsc.main.sitemaps('') WHERE errors > 0 OR warnings >
+    0
+  success_criteria: Uses sitemaps() — with '' for every property, or per property — and reads errors and warnings.
+  unordered: true
+- name: sitemap_contents
+  reference_sql: >-
+    SELECT c.type, sum(c.submitted) AS submitted FROM (SELECT unnest(contents) AS c FROM gsc.main.sitemaps(''))
+    GROUP BY c.type
+  success_criteria: Unnests the contents column of sitemaps() and sums submitted by content type.
+  unordered: true
+- name: is_it_indexed
+  reference_sql: >-
+    SELECT p.page, i.verdict, i.coverage_state, i.last_crawl_time FROM (SELECT site_url, page FROM gsc.main.search_analytics('',
+    dimensions => ['page'], max_rows => 100) ORDER BY clicks DESC LIMIT 1) p, LATERAL gsc.main.url_inspection(p.site_url,
+    p.page) i
+  success_criteria: >-
+    Finds the top page with search_analytics() and passes it to url_inspection(), reporting the verdict
+    and last crawl time.
+- name: sites_via_function
+  reference_sql: SELECT property_type, count(*) AS properties FROM gsc.main.all_sites() GROUP BY property_type
+  check_sql: SELECT count(*) = (SELECT count(*) FROM gsc.main.all_sites()) FROM gsc.main.sites
+  success_criteria: Counts properties by property_type from the sites table or all_sites().
+  unordered: true
