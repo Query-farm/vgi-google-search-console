@@ -29,7 +29,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - run: uv sync --no-sources --frozen
+      - run: uv sync --no-sources --locked
       - name: Ruff (lint)
         run: uv run --no-sources ruff check .
       - name: Ruff (format)
@@ -55,7 +55,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - run: uv sync --no-sources --frozen
+      - run: uv sync --no-sources --locked
       # Structural tier only: it inspects the catalog without running a query,
       # so no credentials are needed. The behavioural tier executes every
       # example against real Search Console and runs in live.yml.
