@@ -65,7 +65,7 @@ class TestScriptHeaders:
 class TestFilterEngine:
     """vgi-python evaluates pushed filters with an in-process DuckDB; the worker must ask for one."""
 
-    def test_every_vgi_python_requirement_has_the_haybarn_extra(self) -> None:
+    def test_every_vgi_python_requirement_has_the_duckdb_extra(self) -> None:
         specs = [r for r in _project()["dependencies"] if _name(r) == "vgi-python"]
         for extra in _project().get("optional-dependencies", {}).values():
             specs += [r for r in extra if _name(r) == "vgi-python"]
@@ -73,7 +73,7 @@ class TestFilterEngine:
             specs += [r for r in _script_requirements(ROOT / script) if _name(r) == "vgi-python"]
         assert specs
         for spec in specs:
-            assert "haybarn" in spec, spec
+            assert "duckdb" in spec, spec
 
 
 class TestMetadata:

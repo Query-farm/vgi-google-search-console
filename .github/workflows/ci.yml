@@ -62,5 +62,5 @@ jobs:
       # Use the project's engine so the client and worker wire versions match.
       - name: vgi-lint (structural)
         run: >
-          uv run --no-sources --with vgi-lint-check==0.82.0 vgi-lint lint "uv run --no-sources gsc_worker.py"
+          uv run --no-sources --with vgi-lint-check==2.0.0 vgi-lint lint "uv run --no-sources gsc_worker.py"
           --no-execute --no-check-links --audit-waivers --fail-on warning

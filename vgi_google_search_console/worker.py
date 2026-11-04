@@ -18,7 +18,7 @@ from dataclasses import replace
 from typing import Any
 
 from vgi import Worker
-from vgi.catalog import Catalog, ReadOnlyCatalogInterface, Schema
+from vgi.catalog import Catalog, ReadOnlyCatalogInterface, Schema, constraint_record
 from vgi.catalog.catalog_interface import AttachOpaqueData, CatalogAttachResult, CatalogInfo
 from vgi.catalog.descriptors import Table
 
@@ -422,8 +422,26 @@ _GSC_CATALOG = Catalog(
                     comment="Every Search Console property the credential can see — the entry point",
                     tags=_SITES_DOCS,
                     column_comments=column_comments(SITE_SCHEMA),
-                    primary_key=(("site_url",),),
-                    not_null=("site_url",),
+                    constraints=(
+                        constraint_record(
+                            ["main"],
+                            "sites",
+                            "site_url_not_null",
+                            "NOT_NULL",
+                            [["site_url"]],
+                            enforcement="ENFORCED",
+                            validation="ALL_ROWS",
+                        ),
+                        constraint_record(
+                            ["main"],
+                            "sites",
+                            "pk",
+                            "PRIMARY_KEY",
+                            [["site_url"]],
+                            enforcement="ENFORCED",
+                            validation="ALL_ROWS",
+                        ),
+                    ),
                 ),
             ],
         ),

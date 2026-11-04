@@ -456,7 +456,10 @@ def test_oauth_grant_works_through_real_sql_attach(tmp_path: Path, pool: bool) -
     events = tmp_path / "worker_events.txt"
     with fake_gsc.serve() as url:
         launcher = tmp_path / "oauth_worker.py"
-        launcher.write_text(f"""
+        header = (root / "gsc_worker.py").read_text().split("# ///\n", maxsplit=1)[0] + "# ///\n"
+        launcher.write_text(
+            header
+            + f"""
 import json
 import os
 import sys
@@ -479,11 +482,12 @@ def refresh(self, *args, **kwargs):
     }}).encode())
 gsc_api.AuthTransport.__call__ = refresh
 worker.main()
-""")
+"""
+        )
         with haybarn.connect() as con:
             for name in ("work_gsc", "personal_gsc"):
                 con.execute(
-                    f"ATTACH 'gsc' AS {name} (TYPE vgi, LOCATION '{sys.executable} {launcher}', "
+                    f"ATTACH 'gsc' AS {name} (TYPE vgi, LOCATION 'uv run --exact --no-project {launcher}', "
                     f"credentials 'oauth', api_url '{url}', POOL {str(pool).lower()}, CACHE false)"
                 )
             for _ in range(2):

@@ -76,8 +76,10 @@ ATTACH 'gsc' (TYPE vgi,
 
 Pin a tag for a deployment, so the worker cannot change under you.
 
-[Haybarn](https://query.farm), Query Farm's DuckDB distribution, ships the `vgi`
-extension. With stock DuckDB, `INSTALL vgi FROM community; LOAD vgi;` first.
+[Haybarn](https://query.farm) 2.0.0rc11 or newer ships the compatible `vgi.v3`
+extension. The client and worker must both use VGI 3; older VGI 2 extensions
+cannot attach this worker. The worker uses a separate DuckDB 1.5.5 environment
+for filter evaluation, provisioned automatically by the script headers or `uvx`.
 
 ## Credentials
 
@@ -508,7 +510,7 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy                               # strict
 uv run pytest                             # offline: unit + SQL end-to-end against a fake API
 uv run pytest -m live                     # against real Search Console (see below)
-uv run --no-sources --with vgi-lint-check==0.82.0 vgi-lint lint "uv run --no-sources gsc_worker.py" \
+uv run --no-sources --with vgi-lint-check==2.0.0 vgi-lint lint "uv run --no-sources gsc_worker.py" \
     --no-execute --no-check-links --audit-waivers --fail-on warning
 ```
 

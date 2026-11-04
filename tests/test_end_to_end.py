@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -43,7 +42,8 @@ def attach_sql(url: str, **extra: Any) -> str:
     """An ATTACH aimed at the fake through ATTACH options — no environment variables."""
     options = {"api_url": url, "page_size": PAGE_SIZE, **extra}
     rendered = ", ".join(f"{k} {v!r}" if isinstance(v, str) else f"{k} {v}" for k, v in options.items())
-    return f"ATTACH 'gsc' (TYPE vgi, LOCATION '{sys.executable} {ROOT / 'gsc_worker.py'}', {rendered})"
+    location = f"uv run --exact --no-project {ROOT / 'gsc_worker.py'}"
+    return f"ATTACH 'gsc' (TYPE vgi, LOCATION '{location}', {rendered})"
 
 
 @pytest.fixture(scope="module")
@@ -99,6 +99,20 @@ def _clear_log() -> None:
 
 
 class TestSites:
+    def test_table_constraints_are_visible_to_sql(self, con: Any) -> None:
+        assert rows(
+            con,
+            "SELECT constraint_type, constraint_column_names FROM duckdb_constraints() "
+            "WHERE database_name = 'gsc' AND table_name = 'sites' ORDER BY constraint_type",
+        ) == [("NOT NULL", ["site_url"]), ("PRIMARY KEY", ["site_url"])]
+
+    def test_site_url_is_non_nullable(self, con: Any) -> None:
+        assert rows(
+            con,
+            "SELECT column_name FROM duckdb_columns() "
+            "WHERE database_name = 'gsc' AND table_name = 'sites' AND NOT is_nullable",
+        ) == [("site_url",)]
+
     def test_sites_table(self, con: Any) -> None:
         got = rows(con, "SELECT site_url, permission_level, property_type FROM gsc.main.sites ORDER BY 1")
         assert got == [
@@ -665,7 +679,7 @@ class TestAttachOptions:
     def test_a_bad_option_fails_the_attach(self, option: str, message: str) -> None:
         haybarn = pytest.importorskip("haybarn")
         connection = haybarn.connect()
-        location = f"{sys.executable} {ROOT / 'gsc_worker.py'}"
+        location = f"uv run --exact --no-project {ROOT / 'gsc_worker.py'}"
         try:
             with pytest.raises(Exception, match=message):
                 connection.execute(f"ATTACH 'gsc' (TYPE vgi, LOCATION '{location}', {option})")

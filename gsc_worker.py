@@ -1,8 +1,8 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http,haybarn]>=0.45.0,<0.46",
-#     "vgi-rpc>=0.52.0",
+#     "vgi-python[http,duckdb]>=0.48.2,<0.49",
+#     "vgi-rpc>=0.52.4",
 #     "httpx>=0.27",
 #     "google-auth>=2.30",
 #     "oauthlib>=3.3.1",

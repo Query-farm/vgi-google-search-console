@@ -18,7 +18,6 @@ exercised with a single call, since it draws on a quota of 2,000 a day.
 from __future__ import annotations
 
 import os
-import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -45,7 +44,7 @@ def con() -> Iterator[Any]:
     mode = "secret" if (service_account or token) else "auto"
     connection = haybarn.connect()
     try:
-        location = f"{sys.executable} {ROOT / 'gsc_worker.py'}"
+        location = f"uv run --exact --no-project {ROOT / 'gsc_worker.py'}"
         connection.execute(f"ATTACH 'gsc' (TYPE vgi, LOCATION '{location}', credentials '{mode}')")
         if service_account:
             connection.execute(
@@ -134,7 +133,7 @@ def test_paging_reaches_the_same_rows_as_one_page(con: Any, site: str) -> None:
     ).fetchall()
     small = haybarn.connect()
     try:
-        location = f"{sys.executable} {ROOT / 'gsc_worker.py'}"
+        location = f"uv run --exact --no-project {ROOT / 'gsc_worker.py'}"
         small.execute(f"ATTACH 'gsc' (TYPE vgi, LOCATION '{location}', page_size 25)")
         for name, variable in (
             ("service_account_json", "VGI_GSC_TEST_SERVICE_ACCOUNT_JSON"),

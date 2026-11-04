@@ -20,12 +20,9 @@ classifiers = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    # `haybarn` is not optional: vgi-python binds a pushed-down WHERE clause with
-    # an in-process DuckDB engine, and without one every filtered scan fails at
-    # runtime with "No DuckDB-compatible engine is installed".
-    # 0.46 requires wire 2.2, but Haybarn 1.5.5rc1's extension uses wire 2.1.
-    # Keep the SDK compatible with its pinned filter-evaluation engine.
-    "vgi-python[http,haybarn]>=0.45.0,<0.46",
+    # The SDK's filter evaluator requires DuckDB 1.5.5. Haybarn 2.0 is used
+    # separately as the VGI 3 client in tests, not as the worker's evaluator.
+    "vgi-python[http,duckdb]>=0.48.2,<0.49",
     "httpx>=0.27",
     # Token minting only — service-account JWT assertions, refresh-token grants
     # and Application Default Credentials discovery. Its own HTTP calls are
@@ -35,7 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-serve = ["vgi-python[http,haybarn,oauth]>=0.45.0,<0.46", "vgi-rpc[sentry]>=0.52.0"]
+serve = ["vgi-python[http,duckdb,oauth]>=0.48.2,<0.49", "vgi-rpc[sentry]>=0.52.4"]
 
 [dependency-groups]
 dev = [
@@ -44,8 +41,8 @@ dev = [
     # means CI can fail on a commit that was clean locally.
     "ruff>=0.16,<0.17",
     "mypy>=1.18",
-    # Drives a real ATTACH in tests/test_end_to_end.py.
-    "haybarn>=1.5.5rc1",
+    # The SQL client needs the VGI 3 extension; workers run in isolated environments.
+    "haybarn>=2.0.0rc11,<2.1",
     # DuckDB materializes TIMESTAMP WITH TIME ZONE through pytz.
     "pytz>=2024.1",
     "pyyaml>=6.0.3",
@@ -72,7 +69,7 @@ path = "vgi_google_search_console/__init__.py"
 packages = ["vgi_google_search_console"]
 
 [tool.uv]
-# The e2e tier needs a pre-release haybarn build that ships the vgi extension.
+# Haybarn 2.0 ships the vgi.v3 extension used by the SDK and SQL tests.
 prerelease = "if-necessary-or-explicit"
 
 [tool.ruff]

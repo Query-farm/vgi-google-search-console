@@ -81,7 +81,7 @@ jobs:
       - name: vgi-lint (structural + behavioural)
         if: env.GSC_KEY != ''
         run: >
-          uv run --no-sources --with vgi-lint-check==0.82.0 vgi-lint lint "uv run --no-sources gsc_worker.py"
+          uv run --no-sources --with vgi-lint-check==2.0.0 vgi-lint lint "uv run --no-sources gsc_worker.py"
           --execute-concurrency 1 --no-check-links --audit-waivers --fail-on error
       - name: Remove the key
         if: always() && env.GSC_KEY != ''

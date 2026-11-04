@@ -296,6 +296,28 @@ wheels = [
 ]
 
 [[package]]
+name = "duckdb"
+version = "1.5.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/19/e57151753576373c6696a12022648546cca6038e8833fda2908ee2342d9b/duckdb-1.5.5.tar.gz", hash = "sha256:72f33ee57ca7595b23957671a2cc7f7fe2be0ecc2d68f63abedcfcaa3a5c1238", size = 18066741, upload-time = "2026-07-22T10:55:17.819Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/47/37/4a38116e7700720fd152c666292214fd3abdf916496991296d8d1f66efbf/duckdb-1.5.5-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:cd98829b67788609017e65c761bd42a5dd0f9129441bed8bda4d6881ccf819f0", size = 32754294, upload-time = "2026-07-22T10:54:29.822Z" },
+    { url = "https://files.pythonhosted.org/packages/66/42/7d392f1ba1eee0eaf4ab4c8c7a604bfe3536cd63f979cf5c98798664f807/duckdb-1.5.5-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:feead93c56679b79592d437c62975d39cb67adedffa7592c763baf8160ac7366", size = 17368211, upload-time = "2026-07-22T10:54:33.359Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/a5/0a6f4fa60562faa615e55e15bd1953a2f2b17a8edd8105e5cda215e43457/duckdb-1.5.5-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:49c963d9469373d7aba8d750d9ea565ab823e94166efed953f184dd9b169b98c", size = 15509136, upload-time = "2026-07-22T10:54:36.369Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/cb/023c89f51978545b9fab318581bba0c457a58e7530d2d933e54ae7d8647c/duckdb-1.5.5-cp313-cp313-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a736217825461732b5442d05a220f3da2e23a0dae114efbf08c9bf171b53098a", size = 19392147, upload-time = "2026-07-22T10:54:39.551Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/c5/41bef391fb8b23dbc133c9f2ba016e7a7a8124513d2cc1b430f1897d87e4/duckdb-1.5.5-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:078e6a60dd8eedde5832f45422ca5c4a6b8c837aeabd8a56ca0b7d933f588053", size = 21511060, upload-time = "2026-07-22T10:54:42.788Z" },
+    { url = "https://files.pythonhosted.org/packages/07/9f/c44dfc1f924ac29b3252dc1b91393c01d009dbfe9f8ed33f10b986151bd1/duckdb-1.5.5-cp313-cp313-win_amd64.whl", hash = "sha256:6826504277dba513c0c5d71d828456c94d729c9d2482f94b2e289f90a9167e28", size = 13168028, upload-time = "2026-07-22T10:54:46.127Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/88/591384b2cd59abddd6f5dc175e60374f9abae6064429f0c4402854c10f44/duckdb-1.5.5-cp313-cp313-win_arm64.whl", hash = "sha256:baa9c5702002fabb559ded2a39008f9f421fcbc7237d388b8213eff1e08858de", size = 13989955, upload-time = "2026-07-22T10:54:49.262Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/56/12c65bfa2d2605b81981b264788891bcf11ec72227889554cead5d8d13b9/duckdb-1.5.5-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:8e6413dd40facb7b8ab21bd844450cd8f549b29e138635be9cf090ef4d2049e2", size = 32761946, upload-time = "2026-07-22T10:54:53.412Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/46/682ce155f17e0d2822d4f13ee3db9ca4b5b7c2da61b841b2629035e1f4bc/duckdb-1.5.5-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:64078acfd16541132ac6e191eb81b2845554444a0305cc1aa581ba107e514aa8", size = 17375069, upload-time = "2026-07-22T10:54:57.269Z" },
+    { url = "https://files.pythonhosted.org/packages/39/ce/a24bcbd3289c8f305a430759c5fc12242740b4af3e17f7593f3a34e333d2/duckdb-1.5.5-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:8c11775cc99a447618d5f1840126db17f2652f3eae05529df4f81f40e2df7151", size = 15519791, upload-time = "2026-07-22T10:55:00.681Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/76/3a01afbc615c1d418c0de58a6b68ac5ce2a8563232c0464bfbc2ce552398/duckdb-1.5.5-cp314-cp314-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:77bbc1e6ba12e1e06f9020117bdf848627ecfdf36f907550e62e008e6109dece", size = 19398251, upload-time = "2026-07-22T10:55:04.168Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/43/3a5e81d1728f4d234c79bfe385808ee7c04834f7c37a4b5c257459c25614/duckdb-1.5.5-cp314-cp314-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fbf0f2d48b43c6c304d00463b463c27ead6c4b01c3c1816b750f728decf71afe", size = 21513851, upload-time = "2026-07-22T10:55:07.864Z" },
+    { url = "https://files.pythonhosted.org/packages/91/41/fc7c829172c60ca22485251eab285f4f1a0d87b486a024c726f21471d86e/duckdb-1.5.5-cp314-cp314-win_amd64.whl", hash = "sha256:9dc826c4b50e64f6c4e4d07a3a9cb075ef70ba3899dc43ec5493dc3d7b04b353", size = 13691858, upload-time = "2026-07-22T10:55:11.181Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/2c/95d9216b79e9273689d7ebce125a54503ed0c9bd7da931f0265888e99779/duckdb-1.5.5-cp314-cp314-win_arm64.whl", hash = "sha256:63e48d4b74b15aeacd688976432a7225163df8c226eddeb8536bba2d4d4ff433", size = 14470180, upload-time = "2026-07-22T10:55:14.445Z" },
+]
+
+[[package]]
 name = "falcon"
 version = "4.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -357,24 +379,14 @@ wheels = [
 
 [[package]]
 name = "haybarn"
-version = "1.5.5rc1"
+version = "2.0.0rc11"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9f/ee/4bb4044464a6c4021bad6680c0509103181c3828ccacef423c547a7502fe/haybarn-1.5.5rc1.tar.gz", hash = "sha256:f24e1e2de4ef1485e6dc41d0fed2f83460b075ebf0e0d2c1fd02737a14f02814", size = 18079519, upload-time = "2026-07-29T17:32:32.999Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4e/9a/f6260f401af46669d82ddfb55a4a41737c9a21f69cbbf76909a5b796eae2/haybarn-2.0.0rc11.tar.gz", hash = "sha256:d7b4bfce3f377c7ca0f163e2ce696a21c4d2ddc07c03a6de9f740dabba1b7edc", size = 16785928, upload-time = "2026-11-04T14:51:23.894Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/65/96/f52bf2820a942a1bc0bc3259aeac49954738fda9fc56be34d6d020032d2b/haybarn-1.5.5rc1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:c3de86910ced6b638ba04fbcda8e3167e138d22036f2c1549f917521a6abd4c0", size = 15452039, upload-time = "2026-07-29T17:31:51.586Z" },
-    { url = "https://files.pythonhosted.org/packages/92/3b/beb56bd111a2056277b2da3af7fb10ec2104dfda6cbb712ac123be72991f/haybarn-1.5.5rc1-cp313-cp313-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:82aa2ec3b2a1ed665a51b5da2ab852e25d09ee159f4b53d78c6c2c04d7710b6b", size = 19309750, upload-time = "2026-07-29T17:31:54.955Z" },
-    { url = "https://files.pythonhosted.org/packages/29/a2/184a64a44919c59edcd5902281ca5113389235b201dad5a994a626e5c624/haybarn-1.5.5rc1-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:45c0bfdbf5abd00c272e834bcb1d2e35dcb6af3e01be8883964c2eda4c1c8a60", size = 21442152, upload-time = "2026-07-29T17:31:57.931Z" },
-    { url = "https://files.pythonhosted.org/packages/62/79/04951634932ec177048f24e86b2a748bd6e40eb846f1bd2b4af1ec2de928/haybarn-1.5.5rc1-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:3de866a132d97376066a4fdb72691f52df7374f4fd41ca0b9229b803f7d420f9", size = 21430346, upload-time = "2026-07-29T17:32:00.881Z" },
-    { url = "https://files.pythonhosted.org/packages/6d/d0/63e429c65f32710c95b60f33f7aed025b4d413e906a128ad3b4ee27c259b/haybarn-1.5.5rc1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:7242146f81aa0a3fbbc0960d110057168b5e3c1a9f5654c04233623cefd96a2b", size = 23276736, upload-time = "2026-07-29T17:32:04.07Z" },
-    { url = "https://files.pythonhosted.org/packages/13/a7/49e70ff529e2fec03be105713253ac8193be7831fc17be82a122e1265db4/haybarn-1.5.5rc1-cp313-cp313-win_amd64.whl", hash = "sha256:226981d0391989566fdfc8ac352ac10d89fda5f3862659cedd0b74cf858ff684", size = 13154237, upload-time = "2026-07-29T17:32:06.966Z" },
-    { url = "https://files.pythonhosted.org/packages/d7/f3/67ea3088959575c933d1df4b96752c9c10c339b4c350ceff6c84cce35fec/haybarn-1.5.5rc1-cp313-cp313-win_arm64.whl", hash = "sha256:2de0805e0f36c6803cf477a516f3029e3cf63c51aee32c1cd4e5ea4e01ce5648", size = 13954140, upload-time = "2026-07-29T17:32:09.655Z" },
-    { url = "https://files.pythonhosted.org/packages/60/e4/5c5c2d842eae1976b1a8d14ec7d3f3af9984e47e874e45855f5e275e140c/haybarn-1.5.5rc1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:e785b001ad430f8221fcf783ab502a10fcdf29b4aa16a47598c619850a1d44ae", size = 15458625, upload-time = "2026-07-29T17:32:12.45Z" },
-    { url = "https://files.pythonhosted.org/packages/07/ee/04c5a83f61d6d1447cc3a5c4f9a1f367e505000942abe233fccf88fd89dc/haybarn-1.5.5rc1-cp314-cp314-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9f446684bcfb21213a757d05da2c9a4a7f8a8e7d9a66acde49e97192c5615536", size = 19315848, upload-time = "2026-07-29T17:32:15.356Z" },
-    { url = "https://files.pythonhosted.org/packages/92/db/09e905c06791b3988f746a31a412f3c013f11601bbc7115f86d4c492a275/haybarn-1.5.5rc1-cp314-cp314-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f1c1243bc1ddf3d3051ccc926ce5ed1acf2cec6a34cc5db989006484c341f643", size = 21443482, upload-time = "2026-07-29T17:32:18.358Z" },
-    { url = "https://files.pythonhosted.org/packages/88/50/db9b0fab9f624cdf46cbd82f48b11040fa5a37c5cef4fb735c482fd77480/haybarn-1.5.5rc1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:9b379fc138e5db21fb0eaee19c9fe900580223e4204a3ee2bd34eeaac4cdbbbb", size = 21444432, upload-time = "2026-07-29T17:32:21.348Z" },
-    { url = "https://files.pythonhosted.org/packages/50/5e/f1a03e7f11c97baff00fc5e91ac2265cfd41ae4cb8dd37a68fcbee21cb62/haybarn-1.5.5rc1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:28562ab9956cfc9e7def888569476e3898c6b6c613d7e2298747196849596535", size = 23280819, upload-time = "2026-07-29T17:32:24.352Z" },
-    { url = "https://files.pythonhosted.org/packages/03/a5/063ab73fdf2e9db524e1b0053fcf4535f030e3075cade6c8d54182ac9d7c/haybarn-1.5.5rc1-cp314-cp314-win_amd64.whl", hash = "sha256:cf83f7b99c991b9221081b6677d38ecaf2552d2481770940e072c1cfd4978df7", size = 13675856, upload-time = "2026-07-29T17:32:27.286Z" },
-    { url = "https://files.pythonhosted.org/packages/d9/ac/41d8e3ca519ea42aa3c1be906dd33d51d50f84ba762bf5eb04b367c54336/haybarn-1.5.5rc1-cp314-cp314-win_arm64.whl", hash = "sha256:61abb523426ec26ce932c61ea7ba6c9f3d4895969145f841dd6a07675ca85d1e", size = 14434853, upload-time = "2026-07-29T17:32:30.138Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/2d/86932c3abea4b1368f2a648df12c39034ba50d9a1a35c54e500cb738ca7f/haybarn-2.0.0rc11-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:077a848bb538b52f9b36d35fb9fe8abeaf70d2ef606ebb454d91e0b908619256", size = 17596026, upload-time = "2026-11-04T14:51:10.463Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/02/98a10e8c0edd39e7a2f78db66024c0c8a35df159668567c68980de314b5a/haybarn-2.0.0rc11-cp312-abi3-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:731ba971756ccee6288c50c1900a14bffd3369296800d063e7974098b84e3642", size = 21660417, upload-time = "2026-11-04T14:51:13.736Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/d0/44eba5f288187aba0c712bd10b2ca5f97f6e4d7cac1d73b871425a702a1c/haybarn-2.0.0rc11-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cf02e73b19f4f3e05c63378f5431c8e49bc4c536ba82b61eaab7e7a0bc6e59bb", size = 24371997, upload-time = "2026-11-04T14:51:17.274Z" },
+    { url = "https://files.pythonhosted.org/packages/da/5b/a76ee8b476c825b774ebde49e81e7be0709f81c4f5f01046a8cfeeb0143e/haybarn-2.0.0rc11-cp312-abi3-win_amd64.whl", hash = "sha256:ee03fe19931e9bb0c9dd77977593d483c35bfe27489c0bc3a97cb9cbfb284283", size = 15376669, upload-time = "2026-11-04T14:51:20.558Z" },
 ]
 
 [[package]]
@@ -1092,12 +1104,12 @@ dependencies = [
     { name = "google-auth" },
     { name = "httpx" },
     { name = "oauthlib" },
-    { name = "vgi-python", extra = ["haybarn", "http"] },
+    { name = "vgi-python", extra = ["duckdb", "http"] },
 ]
 
 [package.optional-dependencies]
 serve = [
-    { name = "vgi-python", extra = ["haybarn", "http", "oauth"] },
+    { name = "vgi-python", extra = ["duckdb", "http", "oauth"] },
     { name = "vgi-rpc", extra = ["sentry"] },
 ]
 
@@ -1116,15 +1128,15 @@ requires-dist = [
     { name = "google-auth", specifier = ">=2.30" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "oauthlib", specifier = ">=3.3.1" },
-    { name = "vgi-python", extras = ["haybarn", "http"], specifier = ">=0.45.0,<0.46" },
-    { name = "vgi-python", extras = ["haybarn", "http", "oauth"], marker = "extra == 'serve'", specifier = ">=0.45.0,<0.46" },
-    { name = "vgi-rpc", extras = ["sentry"], marker = "extra == 'serve'", specifier = ">=0.52.0" },
+    { name = "vgi-python", extras = ["duckdb", "http"], specifier = ">=0.48.2,<0.49" },
+    { name = "vgi-python", extras = ["duckdb", "http", "oauth"], marker = "extra == 'serve'", specifier = ">=0.48.2,<0.49" },
+    { name = "vgi-rpc", extras = ["sentry"], marker = "extra == 'serve'", specifier = ">=0.52.4" },
 ]
 provides-extras = ["serve"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "haybarn", specifier = ">=1.5.5rc1" },
+    { name = "haybarn", specifier = ">=2.0.0rc11,<2.1" },
     { name = "mypy", specifier = ">=1.18" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytz", specifier = ">=2024.1" },
@@ -1134,24 +1146,25 @@ dev = [
 
 [[package]]
 name = "vgi-python"
-version = "0.45.0"
+version = "0.48.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "httpx2" },
     { name = "platformdirs" },
     { name = "pyarrow" },
+    { name = "pycryptodome" },
     { name = "typer" },
     { name = "vgi-rpc" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5a/98/ea39fcda120d7d0081f598ad9f5c99e747faa8d56d6d19339cac6f3e1bd6/vgi_python-0.45.0.tar.gz", hash = "sha256:e35ffb98b9b248f8eb5f14ef413af904eacee3475c2f84238c2b1812e6998a9a", size = 4870474, upload-time = "2026-10-20T17:48:39.727Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/90/04/416356ee381654efa53df55170c00e2bb8df25f3078af08abfc5c36d8289/vgi_python-0.48.2.tar.gz", hash = "sha256:be283345c481908923f93475924ca0c0b0556926e80672c118c6fc5acb43d7cf", size = 5484007, upload-time = "2026-10-30T14:35:46.054Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0e/2f/4f11ae3b39d10b8a7d26d974e518be40aa7bc67fe71a56d99d9b1eee3634/vgi_python-0.45.0-py3-none-any.whl", hash = "sha256:d88c61175cb73523f99c091be5d83e5cffb3765f61afa71ebb00c447b7c4c7d4", size = 1300066, upload-time = "2026-10-20T17:48:37.951Z" },
+    { url = "https://files.pythonhosted.org/packages/67/23/f590acfc164bd9157de772521b7dddd806e5a64e35b80b1244b5eb04f21a/vgi_python-0.48.2-py3-none-any.whl", hash = "sha256:3346d184fe238304d73a2667c6767859829f3dcc3fe0663f115df796829db984", size = 1409590, upload-time = "2026-10-30T14:35:43.675Z" },
 ]
 
 [package.optional-dependencies]
-haybarn = [
-    { name = "haybarn" },
+duckdb = [
+    { name = "duckdb" },
 ]
 http = [
     { name = "vgi-rpc", extra = ["http"] },
@@ -1162,7 +1175,7 @@ oauth = [
 
 [[package]]
 name = "vgi-rpc"
-version = "0.52.0"
+version = "0.52.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docstring-parser" },
@@ -1170,9 +1183,9 @@ dependencies = [
     { name = "pywin32", marker = "sys_platform == 'win32'" },
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/61/8b/0a4aefb96838c0e413c93afbd1c177aa3ebfaa22b134fd25b529d8763fee/vgi_rpc-0.52.0.tar.gz", hash = "sha256:fa94674f134ebce67662d803b5855a443057698d58d6ae90fa145b1bbb19f58d", size = 1636721, upload-time = "2026-10-20T14:20:29.216Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/25/c0/3f7ada33c06954f415a97a80eb8d73ec55dc0ec1c6bfe61f63966bbb415b/vgi_rpc-0.52.4.tar.gz", hash = "sha256:6914374b9c9cbcbc77a144cb95291611fce8e9d295c6ad7cbb1e3ce51e26f5ff", size = 1642693, upload-time = "2026-11-04T13:43:44.871Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/d9/88e65dd7b63a5bdadc6e1dd5921f3dc9cc36d03f3a8cce5d35cdb514211a/vgi_rpc-0.52.0-py3-none-any.whl", hash = "sha256:6a468b957cd8a9fbd78682dc093c02dba9392c7a2369e6c2cd663eb331098ee0", size = 761773, upload-time = "2026-10-20T14:20:27.039Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/80/aba455dea27e758b69b5b1b3c4dc44c4f26321902f663a8e6dc4a91646f5/vgi_rpc-0.52.4-py3-none-any.whl", hash = "sha256:c9ef5eaccd755b96000deda65d561b3639519a951b8b65cf61c1f61fd1ad56df", size = 762786, upload-time = "2026-11-04T13:43:42.891Z" },
 ]
 
 [package.optional-dependencies]

@@ -11,7 +11,7 @@ README.md is the user documentation; this file is for working on the code.
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                       # strict
 uv run pytest                     # offline, ~15s, includes the SQL end-to-end tier
-uv run --no-sources --with vgi-lint-check==0.82.0 vgi-lint lint "uv run --no-sources gsc_worker.py" \
+uv run --no-sources --with vgi-lint-check==2.0.0 vgi-lint lint "uv run --no-sources gsc_worker.py" \
     --no-execute --no-check-links --audit-waivers --fail-on warning   # run FROM the repo root
 ```
 
@@ -102,6 +102,11 @@ from the current directory — run it from the repo root or the waivers vanish.
 
 ## Testing notes
 
+- SQL clients use Haybarn 2.0 and its VGI 3 extension. Launch worker subprocesses
+  through `uv run --exact --no-project` and their PEP-723 headers so their
+  embedded evaluator stays on the SDK-supported DuckDB 1.5.5. Temporary OAuth
+  launchers copy the same header. The SDK prefers Haybarn when it is installed,
+  but its filter profile rejects Haybarn 2.0 in the worker process.
 - `tests/fake_gsc.py` is a deterministic Search Console stand-in (a synthetic
   fact table over 2026-09-01..28, four sites of which two are readable).
   `handle()` plugs into `httpx.MockTransport`; `serve()` runs it on a socket for
@@ -116,7 +121,7 @@ from the current directory — run it from the repo root or the waivers vanish.
 - When analysing data, go through SQL against an ATTACHed worker, and fix a
   missing capability in the worker rather than working around it.
 
-## SDK quirks worth knowing (vgi-python 0.43.x)
+## SDK quirks worth knowing (vgi-python 0.48.x)
 
 - `params.secrets` at bind is a `SecretsAccessor` whose `.get(type)` looks up by
   secret name; use `.to_dict().of_type(...)` (wrapped by `auth.secret_values`).
