@@ -84,8 +84,10 @@ for filter evaluation, provisioned automatically by the script headers or `uvx`.
 ## Credentials
 
 Every Search Console call needs an OAuth token; there is no anonymous access.
-For local use, ATTACH opens a browser to sign in to Query Farm's Google OAuth
-app. Each attachment carries its own authorization in the client's opaque
+For local browser sign-in, use `ATTACH ... (credentials 'oauth')` to sign in to
+Query Farm's Google OAuth app. The default `credentials 'auto'` uses a supplied
+secret or permitted Application Default Credentials; it does not open a browser.
+Each OAuth attachment carries its own authorization in the client's opaque
 attach data. For HTTP deployments or supplied credentials, use a DuckDB
 **secret** of type `google_search_console`. Credential fields are
 redacted in `duckdb_secrets()`; the secret's *name* does not matter, because the
@@ -93,9 +95,10 @@ worker finds it by type.
 
 ### Sign in to Query Farm's Google app (local)
 
-Query Farm registers one OAuth application and distributes its Desktop app
-client registration with the worker. Each user signs in with their own Google
-account. Users do not create a Google Cloud project or configure client credentials.
+Query Farm distributes a Desktop OAuth client registration with each worker.
+Analytics and Search Console use the same sign-in flow, with separate client
+registrations and read-only scopes. Each attachment signs in independently;
+users do not create a Google Cloud project or configure client credentials.
 
 From the project directory:
 
@@ -124,11 +127,10 @@ this does not automatically remember the login after the SQL application exits.
 A new ATTACH starts a new sign-in. Google's browser session may make that quicker.
 
 Workers keep a bounded in-memory credential cache to reuse access tokens. A
-detach RPC evicts this worker's cache entry; the current native extension does
-not send that RPC on SQL DETACH. DETACH removes the SQL catalog, but cannot
-revoke credentials already copied into other workers or clients. Worker exit
-clears its cache without invalidating the client's grant. The former one-hour
-idle and twelve-hour session limits no longer apply; Google's token validity
+detach RPC evicts the receiving worker's cache entry. SQL DETACH removes the
+catalog; it does not revoke credentials copied into other workers or clients.
+Worker exit clears its cache without invalidating the client's grant. There
+are no worker-imposed idle or total session limits: Google's token validity
 and revocation determine whether a retained grant can still refresh.
 
 For two Google accounts, attach twice and choose the appropriate account in
@@ -514,14 +516,37 @@ uv run --no-sources --with vgi-lint-check==2.0.0 vgi-lint lint "uv run --no-sour
     --no-execute --no-check-links --audit-waivers --fail-on warning
 ```
 
+### Shared Google OAuth implementation
+
+The Analytics repository is the canonical source for `oauth.py`,
+`oauth_model.py`, `oauth_callback.py`, `oauth_page.py`, `oauth_assets/`, and the
+shared credential-policy tests. Both workers bundle identical copies so each
+can be installed independently. Connector adapters, client registrations,
+read-only scopes, and API endpoint validation remain in their respective workers.
+
+With both repositories checked out beside each other, update the Analytics
+source and synchronize from the Analytics repository:
+
+```bash
+python3 scripts/sync_oauth.py --target ../vgi-google-search-console
+python3 scripts/sync_oauth.py --check --target ../vgi-google-search-console
+```
+
+Run both workers' test suites before publishing a shared change. Push the
+canonical Analytics change first, then Search Console; Search Console CI
+compares its bundled files and policy tests against Analytics `main`.
+
 ### Layout
 
 | Module | Role |
 |---|---|
-| `gsc_api.py` | The only module that touches the network: allow-list, auth headers, retries, errors |
+| `gsc_api.py` | Upstream HTTP requests: allow-list, auth headers, retries, errors |
 | `auth.py` | The `google_search_console` secret type; credential parsing, caching, ADC fallback |
 | `oauth.py` | Query Farm browser sign-in, portable OAuth grants and per-worker credential caching |
-| `oauth_app.py` | Query Farm's shared Desktop OAuth app registration |
+| `oauth_model.py` | Shared credential selection and portable grant validation |
+| `oauth_callback.py`, `oauth_page.py`, `oauth_assets/` | Shared loopback listener and self-contained sign-in pages |
+| `oauth_adapter.py` | Connector-specific API transport and error bindings |
+| `oauth_app.py` | This worker's Query Farm Desktop OAuth client registration |
 | `settings.py` | ATTACH options: validation and the ADC safety rules |
 | `sites.py` | `sites` / `all_sites` and `sitemaps` |
 | `search_analytics.py` | `search_analytics`: request building, paging, the bind-time schema |

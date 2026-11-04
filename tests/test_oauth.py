@@ -227,6 +227,53 @@ class TestLogin:
 
 class TestCallback:
     @pytest.mark.parametrize(
+        ("query", "status", "title"),
+        [
+            (
+                {"state": "expected", "code": "private-authorization-code"},
+                200,
+                "Authorization received",
+            ),
+            (
+                {
+                    "state": "expected",
+                    "error": "access_denied",
+                    "error_description": '<script>alert("private-provider-detail")</script>',
+                },
+                200,
+                "Sign-in not completed",
+            ),
+            (
+                {"state": "wrong", "code": "private-authorization-code"},
+                400,
+                "Response not accepted",
+            ),
+        ],
+    )
+    def test_branded_page_reports_outcome_without_exposing_credentials(
+        self, query: dict[str, str], status: int, title: str
+    ) -> None:
+        with gsc_api.OAuthCallback("expected") as callback, ThreadPoolExecutor() as pool:
+            pending = pool.submit(httpx.get, callback.redirect_uri, params=query)
+            callback.handle_request()
+            response = pending.result()
+        assert response.status_code == status
+        assert response.headers["content-type"] == "text/html; charset=utf-8"
+        assert int(response.headers["content-length"]) == len(response.content)
+        assert response.headers["cache-control"] == "no-store"
+        assert response.headers["referrer-policy"] == "no-referrer"
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert "default-src 'none'" in response.headers["content-security-policy"]
+        assert f'<h1 id="page-title">{title}</h1>' in response.text
+        assert "Google Search Console" in response.text
+        assert "Query.Farm" in response.text
+        assert "SQL session" in response.text
+        assert "private-authorization-code" not in response.text
+        assert "private-provider-detail" not in response.text
+        assert "<script" not in response.text
+        assert "Connected successfully" not in response.text
+
+    @pytest.mark.parametrize(
         "query",
         [
             "state=wrong&code=secret-code",

@@ -1,0 +1,23 @@
+Query Farm OAuth page assets
+
+Canonical source: vgi-google-analytics/vgi_google_analytics/oauth_assets/
+Bundle this directory and oauth_page.py unchanged in vgi-google-search-console.
+The page embeds these unmodified Latin WOFF2 fonts; it makes no font requests.
+Both font families are licensed under the SIL Open Font License 1.1.
+Strata Sun mark and palette: Query Farm (query-farm-astro/DESIGN_BRIEF.md).
+
+petrona-latin.woff2
+Source: https://fonts.gstatic.com/s/petrona/v38/mtG64_NXL7bZo9XXgXJYtQ.woff2
+SHA256: 16ffbbb1cc89702991e58dce6a0a0b09e3ae6ddd7b71947ebfde9148996c4874
+
+noto-sans-latin.woff2
+Source: https://fonts.gstatic.com/s/notosans/v42/o-0bIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5a7duw.woff2
+SHA256: 51ca196f49a33e79e7870ff88ebd2829a3f627a51e7d690986618f0e7ad2b52d
+
+Petrona-OFL.txt
+Source: https://raw.githubusercontent.com/google/fonts/main/ofl/petrona/OFL.txt
+SHA256: a889ff77b75be8bcd1456ff147eb9dac647f3eb217fad50fb4877496884f6dcb
+
+NotoSans-OFL.txt
+Source: https://raw.githubusercontent.com/google/fonts/main/ofl/notosans/OFL.txt
+SHA256: cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a

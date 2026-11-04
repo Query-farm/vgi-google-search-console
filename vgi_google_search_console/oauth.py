@@ -21,8 +21,9 @@ from typing import Any
 from google.auth.exceptions import TransportError
 from oauthlib.oauth2 import OAuth2Error, WebApplicationClient
 
-from vgi_google_search_console import auth, gsc_api, oauth_app
-from vgi_google_search_console.settings import OAuthGrant
+from . import auth, oauth_app
+from .oauth_adapter import AuthError, api
+from .oauth_model import OAuthGrant
 
 AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 LOGIN_TIMEOUT = 180.0
@@ -41,9 +42,9 @@ def permit_local(allowed: bool) -> None:
 
 def _require_local() -> None:
     if not _local_enabled:
-        raise auth.SearchConsoleAuthError(
+        raise AuthError(
             "Browser OAuth is available only for a local stdio worker. "
-            "For a remote worker, supply your own google_search_console secret."
+            f"For a remote worker, supply your own {auth.SECRET_TYPE} secret."
         )
 
 
@@ -53,7 +54,7 @@ def _client() -> dict[str, str]:
         and oauth_app.CLIENT_SECRET
     ):
         return {auth.CLIENT_ID: oauth_app.CLIENT_ID, auth.CLIENT_SECRET: oauth_app.CLIENT_SECRET}
-    raise auth.SearchConsoleAuthError(
+    raise AuthError(
         "Query Farm's Google OAuth app registration is not included in this build. "
         "Query Farm must register a Desktop app and set CLIENT_ID and CLIENT_SECRET "
         "in oauth_app.py before distributing the worker. End users do not need to create an app."
@@ -72,8 +73,8 @@ class _OAuthCredentials(auth.Credentials):
         """Refresh without reflecting Google's response or grant into RPC errors."""
         try:
             return super().headers(refresh)
-        except auth.SearchConsoleAuthError:
-            raise auth.SearchConsoleAuthError(
+        except AuthError:
+            raise AuthError(
                 "Could not refresh the Google OAuth login; check the connection or detach and attach again"
             ) from None
 
@@ -82,7 +83,7 @@ def credentials(grant: OAuthGrant | None) -> auth.Credentials:
     """Reconstruct authorization in any local worker, reusing its cached access token."""
     _require_local()
     if grant is None:
-        raise auth.SearchConsoleAuthError("Missing OAuth grant; detach and attach again to sign in")
+        raise AuthError("Missing OAuth grant; detach and attach again to sign in")
     with _cache_lock:
         credential = _cache.get(grant)
         if credential is None:
@@ -128,7 +129,7 @@ def _browser_login(client: dict[str, str]) -> dict[str, str]:
     state, verifier = secrets.token_urlsafe(32), secrets.token_urlsafe(64)
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
     flow = WebApplicationClient(client[auth.CLIENT_ID], scope=[auth.SCOPE])
-    with gsc_api.OAuthCallback(state) as callback:
+    with api.OAuthCallback(state) as callback:
         url = flow.prepare_request_uri(
             AUTHORIZE_URL,
             redirect_uri=callback.redirect_uri,
@@ -149,7 +150,7 @@ def _browser_login(client: dict[str, str]) -> dict[str, str]:
         try:
             code = callback.wait(LOGIN_TIMEOUT)
         except (TimeoutError, ValueError) as exc:
-            raise auth.SearchConsoleAuthError(str(exc)) from exc
+            raise AuthError(str(exc)) from exc
         body = flow.prepare_request_body(
             code=code,
             redirect_uri=callback.redirect_uri,
@@ -157,24 +158,24 @@ def _browser_login(client: dict[str, str]) -> dict[str, str]:
             client_secret=client[auth.CLIENT_SECRET],
         )
         try:
-            response = gsc_api.AuthTransport()(
+            response = api.AuthTransport()(
                 auth.TOKEN_URI,
                 method="POST",
                 body=body.encode(),
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
         except TransportError as exc:
-            raise auth.SearchConsoleAuthError(
+            raise AuthError(
                 "Could not reach Google to finish sign-in; check the connection and retry ATTACH"
             ) from exc
     if response.status != 200:
-        raise auth.SearchConsoleAuthError("Google could not complete sign-in; retry ATTACH")
+        raise AuthError("Google could not complete sign-in; retry ATTACH")
     try:
         token: dict[str, Any] = flow.parse_request_body_response(response.data.decode())
     except (OAuth2Error, ValueError, Warning) as exc:
-        raise auth.SearchConsoleAuthError("Google returned an invalid or incomplete authorization") from exc
+        raise AuthError("Google returned an invalid or incomplete authorization") from exc
     refresh = token.get("refresh_token")
     if not isinstance(refresh, str) or not refresh:
-        raise auth.SearchConsoleAuthError("Google did not grant offline access; retry and approve access")
+        raise AuthError("Google did not grant offline access; retry and approve access")
     print("Google sign-in complete. This connection is ready.", file=sys.stderr)
     return {**client, auth.REFRESH_TOKEN: refresh}

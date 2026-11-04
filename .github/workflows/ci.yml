@@ -20,6 +20,19 @@ env:
   UV_NO_SOURCES: "1"
 
 jobs:
+  oauth:
+    name: Shared OAuth source parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+        with:
+          repository: Query-farm/vgi-google-analytics
+          ref: main
+          path: .canonical-oauth
+      - run: python3 .canonical-oauth/scripts/sync_oauth.py --check --target .
+
   check:
     name: Lint, types, tests (incl. offline SQL end-to-end)
     runs-on: ubuntu-latest

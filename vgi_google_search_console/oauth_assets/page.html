@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <title>$title · $service · Query.Farm</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23d9a441' d='M0 16a16 16 0 0 1 32 0Z'/%3E%3Cpath fill='%237a5230' d='M0 16a16 16 0 0 0 32 0Z'/%3E%3C/svg%3E">
+  <style>
+    @font-face {
+      font-family: Petrona;
+      font-style: normal;
+      font-weight: 600 700;
+      font-display: swap;
+      src: url(data:font/woff2;base64,__PETRONA_FONT__) format('woff2');
+    }
+    @font-face {
+      font-family: 'Noto Sans';
+      font-style: normal;
+      font-weight: 400 600;
+      font-display: swap;
+      src: url(data:font/woff2;base64,__NOTO_SANS_FONT__) format('woff2');
+    }
+    :root {
+      color-scheme: light dark;
+      --paper: #f7f3ea;
+      --panel: #fffdf7;
+      --ink: #211a12;
+      --muted: #5d4632;
+      --line: #e6dbc2;
+      --inset: #f7f3ea;
+      --gold: #7d5714;
+      --green: #45632f;
+      --green-hover: #33501f;
+      --status-bg: #e6eddc;
+      --status-ink: #45632f;
+      --notice-bg: #f3e4c4;
+      --notice-ink: #6d4718;
+      --shadow: 0 12px 48px -24px rgb(59 46 34 / 22%);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 48px 24px;
+      background: var(--paper);
+      color: var(--ink);
+      font: 400 15px/1.7 'Noto Sans', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page { width: min(100%, 580px); }
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 30px;
+      font: 700 29px/1 Petrona, Georgia, serif;
+      letter-spacing: -0.04em;
+    }
+    .brand-dot { color: var(--gold); }
+    .mark { flex: none; border-radius: 50%; overflow: hidden; }
+    main {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .connector {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      padding: 20px 36px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .connector-name { color: var(--ink); font-size: 13px; font-weight: 600; }
+    .access { display: inline-flex; align-items: center; gap: 6px; }
+    .content { padding: 36px; }
+    .status-icon {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      margin-bottom: 24px;
+      border-radius: 50%;
+      background: var(--status-bg);
+      color: var(--status-ink);
+    }
+    .denied .status-icon, .invalid .status-icon {
+      background: var(--notice-bg);
+      color: var(--notice-ink);
+    }
+    h1 {
+      margin: 0 0 14px;
+      font: 600 clamp(28px, 5vw, 36px)/1.15 Petrona, Georgia, serif;
+      letter-spacing: -0.022em;
+      text-wrap: balance;
+    }
+    p { margin: 0; }
+    .description { color: var(--muted); }
+    .next-step {
+      margin-top: 28px;
+      padding: 20px;
+      background: var(--inset);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    h2 { margin: 0 0 6px; font-size: 14px; font-weight: 600; line-height: 1.5; }
+    .next-step p { color: var(--muted); font-size: 13px; }
+    footer {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+      margin-top: 24px;
+      font-size: 12px;
+    }
+    a { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+    a:hover { color: var(--green-hover); }
+    a:focus-visible { outline: 2px solid var(--green); outline-offset: 5px; border-radius: 2px; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #1a1512;
+        --panel: #2a2420;
+        --ink: #f4ece0;
+        --muted: #c6b8a2;
+        --line: #514336;
+        --inset: #211a12;
+        --gold: #d9a441;
+        --green: #8cb878;
+        --green-hover: #aecb84;
+        --status-bg: #303c27;
+        --status-ink: #aecb84;
+        --notice-bg: #46371f;
+        --notice-ink: #f0c877;
+        --shadow: 0 12px 48px -24px rgb(0 0 0 / 50%);
+      }
+    }
+    @media (max-width: 480px) {
+      body { padding: 32px 16px; }
+      .connector { padding: 16px 24px; }
+      .content { padding: 28px 24px; }
+      .next-step { padding: 16px; }
+    }
+    @media (forced-colors: active) {
+      .status-icon { outline: 1px solid CanvasText; }
+    }
+  </style>
+</head>
+<body class="$outcome">
+  <div class="page">
+    <header class="brand" aria-label="Query.Farm">
+      <svg class="mark" width="36" height="36" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <rect width="64" height="16" fill="#f0c877"/>
+        <rect y="16" width="64" height="16" fill="#d9a441"/>
+        <rect y="32" width="64" height="16" fill="#a9762e"/>
+        <rect y="48" width="64" height="16" fill="#7a5230"/>
+      </svg>
+      <span aria-hidden="true">Query<span class="brand-dot">.</span>Farm</span>
+    </header>
+    <main aria-labelledby="page-title">
+      <div class="connector">
+        <span class="connector-name">$service</span>
+        <span class="access">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true" focusable="false">
+            <rect x="5" y="10" width="14" height="11" rx="2"/>
+            <path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>
+          </svg>
+          Read-only connector
+        </span>
+      </div>
+      <div class="content">
+        <div class="status-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+            $icon
+          </svg>
+        </div>
+        <h1 id="page-title">$title</h1>
+        <p class="description">$description</p>
+        <section class="next-step" aria-labelledby="next-title">
+          <h2 id="next-title">$next_title</h2>
+          <p>$next_description</p>
+        </section>
+      </div>
+    </main>
+    <footer aria-label="Resources">
+      <a href="$documentation_url" target="_blank" rel="noopener noreferrer">Connector documentation</a>
+      <a href="https://query.farm/" target="_blank" rel="noopener noreferrer">Query.Farm</a>
+    </footer>
+  </div>
+</body>
+</html>

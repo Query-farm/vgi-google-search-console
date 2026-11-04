@@ -6,15 +6,26 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+- Standardized the Google OAuth runtime, portable grant validation, credential
+  selection, and callback pages across Analytics and Search Console. Shared
+  files and policy tests have a sync command and a Search Console CI parity
+  check against the canonical Analytics source. Client registrations and
+  read-only scopes remain connector-specific.
+- Both workers reject obsolete `oauth_profile` / `oauth_reauth` options;
+  browser sign-in requires explicit `credentials 'oauth'`.
 - Upgraded to `vgi-python` 0.48.2 and `vgi-rpc` 0.52.4, with canonical VGI 3
   table constraints. Clients now need a VGI 3 extension (Haybarn 2.0.0rc11 or
   newer). Workers use DuckDB 1.5.5 for the SDK's pinned filter-evaluation
   profile; SQL tests launch isolated workers from their PEP-723 headers.
 - Updated the SQL test client to Haybarn 2.0.0rc11 and `vgi-lint-check` to 2.0.0.
+- Browser sign-in responses use a self-contained Query Farm page with light
+  and dark themes, connector-specific documentation, and distinct received,
+  declined and invalid response states. Authorization receipt is shown before
+  the SQL session completes the credential exchange.
 - Browser sign-in at ATTACH through Query Farm's shared Desktop OAuth app,
-  with PKCE, a loopback callback and separate in-memory authorization for each
-  attachment. Logins expire after an hour idle or twelve hours total and are
-  cleared by worker exit or a detach RPC; no Keychain or credential files.
+  with PKCE, a loopback callback and a portable refreshable grant for each
+  attachment. Worker exit or a detach RPC clears only that worker's cache;
+  there are no worker-imposed session limits, Keychain or credential files.
 - Query Farm supplies the app registration in `oauth_app.py`; end users sign
   in with their own Google accounts without creating or configuring an app.
 - Disable local OAuth on all shared transports and restrict ADC there to an

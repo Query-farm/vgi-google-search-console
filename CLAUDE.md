@@ -20,14 +20,15 @@ from the current directory — run it from the repo root or the waivers vanish.
 
 ## Invariants (each has a test)
 
-- **Only `gsc_api.py` touches the network or imports `httpx`.** Every request
-  goes through `gsc_api._call`, whose allow-list permits GET on
+- **Only `gsc_api.py` makes upstream HTTP requests or imports `httpx`.**
+  Every API request goes through `gsc_api._call`, whose allow-list permits GET on
   `/webmasters/v3/sites…` and POST only to `…/searchAnalytics/query` and
   `/v1/urlInspection/index:inspect`. Do not add a write (site add/delete,
   sitemap submit/delete); the worker is read-only by design. google-auth's token
   refreshes go through `gsc_api.AuthTransport`, so never import
   `google.auth.transport.requests`. Browser OAuth uses the same token transport
-  and a temporary loopback callback listener in `gsc_api.OAuthCallback`.
+  and a temporary loopback callback listener in `oauth_callback.py`,
+  wrapped by `gsc_api.OAuthCallback`.
   After sign-in there is no loopback token server; each worker refreshes the
   grant from the client's opaque attach data through `gsc_api.AuthTransport`.
 - **Only the `webmasters.readonly` scope.** Never request `webmasters` or
@@ -67,9 +68,8 @@ from the current directory — run it from the repo root or the waivers vanish.
   or a token broker; test SQL with `POOL false`. Keep per-worker credential
   caching bounded and isolate it by the complete grant, including its random
   attachment ID. Detach only evicts this worker's cache; it cannot invalidate
-  copies or revoke Google consent. Native extension 74015fc does not send a
-  detach RPC on SQL DETACH. Clients own retention of attach data; no worker
-  expiry or credential file is required. OAuth mode must reject `api_url`
+  copies or revoke Google consent. Clients own retention of attach data; no
+  worker expiry or credential file is required. OAuth mode must reject `api_url`
   overrides before sign-in and when decoding opaque data. The refresh endpoint
   and scope must stay fixed, and malformed/old grants must require a new ATTACH
   rather than falling back to ADC.
@@ -107,6 +107,14 @@ from the current directory — run it from the repo root or the waivers vanish.
   embedded evaluator stays on the SDK-supported DuckDB 1.5.5. Temporary OAuth
   launchers copy the same header. The SDK prefers Haybarn when it is installed,
   but its filter profile rejects Haybarn 2.0 in the worker process.
+- The shared OAuth runtime (`oauth.py`, `oauth_model.py`, `oauth_callback.py`),
+  browser presentation (`oauth_page.py`, `oauth_assets/`), and
+  `tests/test_oauth_policy.py` are canonical in `vgi-google-analytics`.
+  Change them there and run the sync command documented in README; use
+  `--check` to verify parity. Search Console CI compares against Analytics `main`, so publish the
+  canonical change first. Keep connector adapters, registrations, scopes and
+  API endpoint validation separate. Fonts and licenses are bundled; the page
+  confirms receipt, not a completed token exchange.
 - `tests/fake_gsc.py` is a deterministic Search Console stand-in (a synthetic
   fact table over 2026-09-01..28, four sites of which two are readable).
   `handle()` plugs into `httpx.MockTransport`; `serve()` runs it on a socket for
