@@ -326,7 +326,7 @@ _CATALOG_TAGS = {
 _SCHEMA_TAGS = {
     "provider": "google-search-console",
     "domain": "search-analytics",
-    "vgi.title": "Search Performance, Sitemaps & Indexing",
+    "vgi.title": "Search Console data",
     "vgi.categories": _CATEGORIES,
     "vgi.keywords": keywords(
         "google search console", "seo", "search analytics", "queries", "sitemaps", "indexing"
