@@ -94,3 +94,9 @@ not passing. The [URL Inspection API](https://developers.google.com/webmaster-to
 describes the indexed version rather than running a live URL test. Neither this
 snapshot nor the synthetic statuses explain the earlier traffic or forecast gains.
 See [STANDARD.md](STANDARD.md) for notebook conventions.
+
+The notebook creates its Haybarn connection with an empty temporary secret
+directory and persistent secrets disabled. Its visible SQL creates only a
+TEMPORARY dummy secret for the local fixture. Assertions check the initial empty
+inventory and absence of persistent secrets before cleanup. Existing saved SQL
+credentials are neither loaded nor modified.
