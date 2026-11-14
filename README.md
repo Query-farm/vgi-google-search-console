@@ -428,6 +428,15 @@ ORDER BY clicks DESC;
 SELECT site_url FROM gsc.sites
 WHERE permission_level <> 'siteUnverifiedUser'
   AND site_url NOT IN (SELECT site_url FROM gsc.sitemaps(''));
+
+-- Top pages that earn clicks but that Google has seen in no sitemap
+SELECT p.site_url, p.page, p.clicks, i.coverage_state
+FROM (SELECT site_url, page, clicks
+      FROM gsc.search_analytics('', dimensions => ['page'], max_rows => 100)
+      ORDER BY clicks DESC LIMIT 10) p,
+     LATERAL gsc.url_inspection(p.site_url, p.page, cache_ttl => 3600) i
+WHERE len(i.sitemaps) = 0
+ORDER BY p.clicks DESC;
 ```
 
 ## Design notes

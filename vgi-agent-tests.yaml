@@ -96,3 +96,17 @@ tasks:
   check_sql: SELECT count(*) = (SELECT count(*) FROM gsc.main.all_sites()) FROM gsc.main.sites
   success_criteria: Counts properties by property_type from the sites table or all_sites().
   unordered: true
+# Composed (sites × search_analytics) on live data, so no exact-compare reference: the
+# prompt pins the answer table, and check_sql recomputes the truth and fails on a
+# missing, extra or absent property. tests/test_end_to_end.py grades a right and a
+# wrong answer with it.
+- name: idle_properties
+  check_sql: >-
+    WITH truth AS (SELECT site_url FROM gsc.main.sites WHERE permission_level <> 'siteUnverifiedUser'
+    AND site_url NOT IN (SELECT site_url FROM gsc.main.search_analytics('') WHERE clicks > 0))
+    SELECT (SELECT count(*) FROM idle_properties) = (SELECT count(*) FROM truth) AND NOT EXISTS
+    (SELECT 1 FROM truth t LEFT JOIN idle_properties a ON a.site_url = t.site_url WHERE a.site_url IS NULL)
+  success_criteria: >-
+    Lists the readable properties from the sites table that have no row with clicks in a
+    search_analytics() query over the last 28 days (an anti-join or LEFT JOIN with 0), saved in
+    idle_properties.

@@ -100,7 +100,7 @@ class TestCatalog:
         public = [t["name"] for t in json.loads(worker._AGENT_TEST_TASKS)]
         assert [g["name"] for g in graders] == public
         for grader in graders:
-            assert grader["reference_sql"]
+            assert grader.get("reference_sql") or grader.get("check_sql")
             assert grader["success_criteria"]
 
     def test_secret_type_is_advertised(self) -> None:

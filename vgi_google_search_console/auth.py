@@ -69,6 +69,11 @@ QUOTA_PROJECT_ID = "quota_project_id"
 
 _REDACT = {"redact": "true"}
 
+#: Where a user learns how to obtain each kind of credential the secret accepts.
+CREDENTIALS_DOC_URL = (
+    "https://github.com/Query-farm/vgi-google-search-console#supplying-credentials-with-a-duckdb-secret"
+)
+
 SECRET_SPEC = SecretTypeSpec(
     name=SECRET_TYPE,
     description=(
@@ -80,13 +85,34 @@ SECRET_SPEC = SecretTypeSpec(
     ),
     schema=pa.schema(
         [
-            pa.field(SERVICE_ACCOUNT_JSON, pa.string(), metadata=_REDACT),
-            pa.field(CLIENT_ID, pa.string()),
-            pa.field(CLIENT_SECRET, pa.string(), metadata=_REDACT),
-            pa.field(REFRESH_TOKEN, pa.string(), metadata=_REDACT),
-            pa.field(ACCESS_TOKEN, pa.string(), metadata=_REDACT),
-            pa.field(QUOTA_PROJECT_ID, pa.string()),
-        ]
+            pa.field(
+                SERVICE_ACCOUNT_JSON,
+                pa.string(),
+                metadata={**_REDACT, "vgi_doc": "Contents of a service-account JSON key file."},
+            ),
+            pa.field(CLIENT_ID, pa.string(), metadata={"vgi_doc": "OAuth client id of a user grant."}),
+            pa.field(
+                CLIENT_SECRET,
+                pa.string(),
+                metadata={**_REDACT, "vgi_doc": "OAuth client secret of a user grant."},
+            ),
+            pa.field(
+                REFRESH_TOKEN,
+                pa.string(),
+                metadata={**_REDACT, "vgi_doc": "OAuth refresh token granting webmasters.readonly."},
+            ),
+            pa.field(
+                ACCESS_TOKEN,
+                pa.string(),
+                metadata={**_REDACT, "vgi_doc": "Short-lived OAuth access token (about an hour)."},
+            ),
+            pa.field(
+                QUOTA_PROJECT_ID,
+                pa.string(),
+                metadata={"vgi_doc": "Google Cloud project to bill API quota to (optional)."},
+            ),
+        ],
+        metadata={"vgi_doc_url": CREDENTIALS_DOC_URL},
     ),
 )
 

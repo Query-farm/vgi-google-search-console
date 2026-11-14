@@ -55,6 +55,19 @@ TOP_PAGE_SQL = (
     "LATERAL gsc.main.url_inspection(p.site_url, p.page) i"
 )
 
+#: search_analytics → url_inspection again, this time reading the inspection's
+#: `sitemaps` list: pages that earn clicks but that no submitted sitemap lists.
+UNLISTED_TOP_PAGES_DESCRIPTION = (
+    "Which of the 10 most-clicked pages Google has not seen in any sitemap, with their coverage state"
+)
+UNLISTED_TOP_PAGES_SQL = (
+    "SELECT p.site_url, p.page, p.clicks, i.coverage_state "
+    "FROM (SELECT site_url, page, clicks FROM gsc.main.search_analytics('', "
+    "dimensions => ['page'], max_rows => 100) ORDER BY clicks DESC LIMIT 10) p, "
+    "LATERAL gsc.main.url_inspection(p.site_url, p.page, cache_ttl => 3600) i "
+    "WHERE len(i.sitemaps) = 0 ORDER BY p.clicks DESC, p.site_url, p.page"
+)
+
 
 def _strings(values: Any) -> list[str]:
     return [str(v) for v in values or [] if v is not None]
@@ -202,6 +215,7 @@ class UrlInspectionFunction(RowTransformFunction[UrlInspectionArgs]):
                     "Is the most-clicked page indexed, and when was it last crawled?",
                     TOP_PAGE_SQL,
                 ),
+                (UNLISTED_TOP_PAGES_DESCRIPTION, UNLISTED_TOP_PAGES_SQL),
                 (
                     "Top pages where Google chose a different canonical than the page declares",
                     "SELECT p.page, i.user_canonical, i.google_canonical "
@@ -217,6 +231,7 @@ class UrlInspectionFunction(RowTransformFunction[UrlInspectionArgs]):
                 sql=TOP_PAGE_SQL,
                 description="Is the most-clicked page indexed, and when was it last crawled?",
             ),
+            FunctionExample(sql=UNLISTED_TOP_PAGES_SQL, description=UNLISTED_TOP_PAGES_DESCRIPTION),
         ]
 
     @classmethod

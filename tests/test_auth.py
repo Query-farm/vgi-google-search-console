@@ -159,3 +159,13 @@ class TestSecretSpec:
             auth.REFRESH_TOKEN,
             auth.ACCESS_TOKEN,
         }
+
+    def test_every_field_says_what_it_holds(self) -> None:
+        """vgi-lint VGI1011: a client shows each field's vgi_doc when asking for the value."""
+        undocumented = [f.name for f in auth.SECRET_SPEC.schema if not (f.metadata or {}).get(b"vgi_doc")]
+        assert undocumented == []
+
+    def test_links_to_how_to_get_credentials(self) -> None:
+        """vgi-lint VGI1012: the schema points at the README section on obtaining credentials."""
+        metadata = auth.SECRET_SPEC.schema.metadata or {}
+        assert metadata.get(b"vgi_doc_url") == auth.CREDENTIALS_DOC_URL.encode()

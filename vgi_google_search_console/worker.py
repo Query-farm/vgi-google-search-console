@@ -23,17 +23,40 @@ from vgi.catalog.catalog_interface import AttachOpaqueData, CatalogAttachResult,
 from vgi.catalog.descriptors import Table
 
 from vgi_google_search_console import __version__, auth, oauth, settings
-from vgi_google_search_console.inspection import INDEXING_FUNCTIONS, TOP_PAGE_SQL
+from vgi_google_search_console.inspection import (
+    INDEXING_FUNCTIONS,
+    TOP_PAGE_SQL,
+    UNLISTED_TOP_PAGES_DESCRIPTION,
+    UNLISTED_TOP_PAGES_SQL,
+)
 from vgi_google_search_console.meta import column_comments, docs, examples, keywords
 from vgi_google_search_console.schemas import SITE_SCHEMA
 from vgi_google_search_console.search_analytics import PERFORMANCE_FUNCTIONS
-from vgi_google_search_console.sites import SITE_FUNCTIONS, AllSitesFunction
+from vgi_google_search_console.sites import (
+    SITE_FUNCTIONS,
+    SITEMAP_COVERAGE_DESCRIPTION,
+    SITEMAP_COVERAGE_SQL,
+    AllSitesFunction,
+)
 
 IMPLEMENTATION_VERSION = __version__
 DATA_VERSION_SPEC = f"=={__version__}"
 SOURCE_URL = "https://github.com/Query-farm/vgi-google-search-console"
 
 _FUNCTIONS = [*SITE_FUNCTIONS, *PERFORMANCE_FUNCTIONS, *INDEXING_FUNCTIONS]
+
+#: sites joined to search_analytics(): the property list with its traffic, so a
+#: readable property Google returned no rows for still shows up, as 0.
+PROPERTY_TRAFFIC_DESCRIPTION = (
+    "Each readable property's kind with its clicks and impressions over the last 28 days, "
+    "0 where Google returned no rows"
+)
+PROPERTY_TRAFFIC_SQL = (
+    "SELECT s.site_url, s.property_type, coalesce(t.clicks, 0) AS clicks, "
+    "coalesce(t.impressions, 0) AS impressions FROM gsc.main.sites s "
+    "LEFT JOIN gsc.main.search_analytics('') t ON t.site_url = s.site_url "
+    "WHERE s.permission_level <> 'siteUnverifiedUser' ORDER BY clicks DESC, s.site_url"
+)
 
 _EXAMPLE_QUERIES = examples(
     (
@@ -62,6 +85,9 @@ _EXAMPLE_QUERIES = examples(
         "WHERE errors > 0 OR warnings > 0 ORDER BY errors DESC",
     ),
     ("Index status of the most-clicked page", TOP_PAGE_SQL),
+    (PROPERTY_TRAFFIC_DESCRIPTION, PROPERTY_TRAFFIC_SQL),
+    (SITEMAP_COVERAGE_DESCRIPTION, SITEMAP_COVERAGE_SQL),
+    (UNLISTED_TOP_PAGES_DESCRIPTION, UNLISTED_TOP_PAGES_SQL),
 )
 
 #: Run by `vgi-lint --execute` against a live credential, so each must hold for
@@ -204,6 +230,15 @@ _AGENT_TEST_TASKS = json.dumps(
             "name": "sites_via_function",
             "prompt": (
                 "How many of my Search Console properties are domain properties versus URL-prefix ones?"
+            ),
+        },
+        {
+            "name": "idle_properties",
+            "prompt": (
+                "Which of the Search Console properties I can read got no clicks at all from Google "
+                "Search in the last 28 days? Save the answer as a temporary table named "
+                "idle_properties with a single VARCHAR column site_url, holding each property's URL "
+                "exactly as the sites table lists it."
             ),
         },
     ]
@@ -396,6 +431,7 @@ _SITES_DOCS = docs(
             "SELECT property_type, permission_level, count(*) AS properties FROM gsc.main.sites "
             "GROUP BY property_type, permission_level ORDER BY properties DESC",
         ),
+        (PROPERTY_TRAFFIC_DESCRIPTION, PROPERTY_TRAFFIC_SQL),
     ),
     extra={
         **_CLASSIFY,

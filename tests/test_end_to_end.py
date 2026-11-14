@@ -22,7 +22,7 @@ import pytest
 import yaml
 
 from tests import fake_gsc
-from vgi_google_search_console import worker
+from vgi_google_search_console import inspection, sites, worker
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -703,20 +703,71 @@ def _documented_examples() -> list[tuple[str, str]]:
     ]
 
 
+#: Graders whose check_sql reads a table the prompt tells the agent to save:
+#: task name → (that table, a right answer, a wrong answer). Each check is run
+#: against both, so it is shown to pass the one and fail the other.
+ANSWER_TABLE_GRADERS = {
+    "idle_properties": (
+        "idle_properties",
+        # Every readable property: the fake has no data in the default 28 days.
+        "SELECT site_url FROM gsc.main.sites WHERE permission_level <> 'siteUnverifiedUser'",
+        "SELECT site_url FROM gsc.main.sites",
+    ),
+}
+
+
+def _graders() -> list[dict[str, Any]]:
+    tasks: list[dict[str, Any]] = yaml.safe_load((ROOT / "vgi-agent-tests.yaml").read_text())["tasks"]
+    return tasks
+
+
 def _grader_queries() -> list[tuple[str, str]]:
-    graders = yaml.safe_load((ROOT / "vgi-agent-tests.yaml").read_text())["tasks"]
     found = []
-    for grader in graders:
-        reference = grader["reference_sql"]
+    for grader in _graders():
+        reference = grader.get("reference_sql") or []
         for sql in [reference] if isinstance(reference, str) else reference:
             found.append((grader["name"], sql))
-        if grader.get("check_sql"):
+        if grader.get("check_sql") and grader["name"] not in ANSWER_TABLE_GRADERS:
             found.append((f"{grader['name']} (check)", grader["check_sql"]))
     return found
 
 
 DOCUMENTED = _documented_examples()
 GRADERS = _grader_queries()
+
+
+def over_fake_range(sql: str) -> str:
+    """A documented example with its default 28-day window pinned to the fake's dates."""
+    pinned = sql.replace("search_analytics('',", f"search_analytics('', {RANGE},")
+    pinned = pinned.replace("search_analytics('')", f"search_analytics('', {RANGE})")
+    assert pinned != sql
+    return pinned
+
+
+class TestComposedExamples:
+    """The examples that combine objects return what their descriptions say."""
+
+    def test_property_traffic_keeps_properties_without_rows(self, con: Any) -> None:
+        got = rows(con, over_fake_range(worker.PROPERTY_TRAFFIC_SQL))
+        assert got == [
+            ("https://www.example.com/", "url_prefix", TOTAL_CLICKS, TOTAL_IMPRESSIONS),
+            (SITE, "domain", TOTAL_CLICKS, TOTAL_IMPRESSIONS),
+            ("https://locked.example/", "url_prefix", 0, 0),
+        ]
+
+    def test_sitemap_coverage_sets_listed_urls_against_searched_pages(self, con: Any) -> None:
+        got = rows(con, over_fake_range(sites.SITEMAP_COVERAGE_SQL))
+        # 120 + 40 web URLs across the two sitemaps; the image entry is not counted.
+        assert got == [(SITE, 160, len(fake_gsc.PAGES))]
+
+    def test_unlisted_top_pages_are_the_ones_no_sitemap_names(self, con: Any) -> None:
+        got = rows(con, over_fake_range(inspection.UNLISTED_TOP_PAGES_SQL))
+        assert {(site, page) for site, page, _clicks, _state in got} == {
+            (site, page) for site in (OTHER, SITE) for page in fake_gsc.PAGES[1:]
+        }
+        assert [clicks for _site, _page, clicks, _state in got] == sorted(
+            (clicks for _site, _page, clicks, _state in got), reverse=True
+        )
 
 
 class TestCatalogExamples:
@@ -737,3 +788,16 @@ class TestCatalogExamples:
     @pytest.mark.parametrize("sql", [sql for _name, sql in GRADERS], ids=[name for name, _sql in GRADERS])
     def test_agent_reference_queries_run(self, con: Any, sql: str) -> None:
         rows(con, sql)
+
+    @pytest.mark.parametrize("name", sorted(ANSWER_TABLE_GRADERS))
+    def test_answer_table_checks_tell_right_from_wrong(self, con: Any, name: str) -> None:
+        table, right, wrong = ANSWER_TABLE_GRADERS[name]
+        check = next(g["check_sql"] for g in _graders() if g["name"] == name)
+        verdicts = []
+        try:
+            for answer in (right, wrong):
+                con.execute(f"CREATE OR REPLACE TEMP TABLE {table} AS {answer}")
+                verdicts.append(rows(con, check))
+        finally:
+            con.execute(f"DROP TABLE IF EXISTS {table}")
+        assert verdicts == [[(True,)], [(False,)]]

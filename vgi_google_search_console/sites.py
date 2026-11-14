@@ -33,6 +33,22 @@ from vgi_google_search_console.schemas import SITE_SCHEMA, SITEMAP_SCHEMA
 
 _log = logging.getLogger(__name__)
 
+#: sitemaps() against search_analytics(): how many URLs a property's sitemaps
+#: list next to how many of its pages actually appear in Google Search.
+SITEMAP_COVERAGE_DESCRIPTION = (
+    "For each property with sitemaps, web URLs listed in them versus pages that earned impressions "
+    "in the last 28 days (counting up to 25,000 pages)"
+)
+SITEMAP_COVERAGE_SQL = (
+    "WITH listed AS (SELECT site_url, sum(c.submitted) AS submitted_urls "
+    "FROM (SELECT site_url, unnest(contents) AS c FROM gsc.main.sitemaps('')) "
+    "WHERE c.type = 'web' GROUP BY site_url), "
+    "searched AS (SELECT site_url, count(*) AS pages_with_impressions "
+    "FROM gsc.main.search_analytics('', dimensions => ['page'], max_rows => 25000) GROUP BY site_url) "
+    "SELECT l.site_url, l.submitted_urls, coalesce(s.pages_with_impressions, 0) AS pages_with_impressions "
+    "FROM listed l LEFT JOIN searched s USING (site_url) ORDER BY l.site_url"
+)
+
 #: A property the credential is listed on but may not read.
 UNVERIFIED = "siteUnverifiedUser"
 
@@ -270,6 +286,7 @@ class SitemapsFunction(TableFunctionGenerator[SitemapsArgs, SiteWalkState]):
                     "WHERE s.permission_level <> 'siteUnverifiedUser' AND s.site_url NOT IN ("
                     "SELECT site_url FROM gsc.main.sitemaps('')) ORDER BY s.site_url",
                 ),
+                (SITEMAP_COVERAGE_DESCRIPTION, SITEMAP_COVERAGE_SQL),
             ),
         )
         examples = [
@@ -281,6 +298,7 @@ class SitemapsFunction(TableFunctionGenerator[SitemapsArgs, SiteWalkState]):
                 ),
                 description="Sitemaps with errors or warnings, across every property",
             ),
+            FunctionExample(sql=SITEMAP_COVERAGE_SQL, description=SITEMAP_COVERAGE_DESCRIPTION),
         ]
 
     @classmethod
