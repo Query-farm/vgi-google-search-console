@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.1.0 - 2026-11-14
+
+First release.
+
+- Composed example queries that combine the worker's functions, plus an
+  idle-properties agent test task.
 - Standardized the Google OAuth runtime, portable grant validation, credential
   selection, and callback pages across Analytics and Search Console. Shared
   files and policy tests have a sync command and a Search Console CI parity
