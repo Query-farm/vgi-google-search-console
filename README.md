@@ -604,3 +604,7 @@ Search data belongs to the owner of each property and is accessed under the
 [Google APIs Terms of Service](https://developers.google.com/terms). Google
 Search Console is a trademark of Google LLC; this project is not affiliated with
 or endorsed by Google. See [NOTICE](NOTICE).
+
+## Executed notebook
+
+[Compare weighted CTR and a bounded URL-inspection review](notebooks/README.md) using an explicit synthetic local API through the real worker.

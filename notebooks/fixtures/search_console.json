@@ -1,0 +1,155 @@
+{
+  "provenance": "Explicitly invented notebook fixture; not a Google response, customer data, or recorded traffic.",
+  "site_url": "sc-domain:example.com",
+  "start_date": "2026-09-01",
+  "end_date": "2026-09-07",
+  "date_semantics": "inclusive Pacific Time calendar dates",
+  "facts": [
+    {
+      "page": "https://www.example.com/",
+      "device": "DESKTOP",
+      "clicks": 200,
+      "impressions": 2000,
+      "position": 3
+    },
+    {
+      "page": "https://www.example.com/",
+      "device": "MOBILE",
+      "clicks": 160,
+      "impressions": 8000,
+      "position": 7
+    },
+    {
+      "page": "https://www.example.com/docs",
+      "device": "DESKTOP",
+      "clicks": 100,
+      "impressions": 1000,
+      "position": 4
+    },
+    {
+      "page": "https://www.example.com/docs",
+      "device": "MOBILE",
+      "clicks": 60,
+      "impressions": 3000,
+      "position": 8
+    },
+    {
+      "page": "https://www.example.com/pricing",
+      "device": "DESKTOP",
+      "clicks": 90,
+      "impressions": 1500,
+      "position": 5
+    },
+    {
+      "page": "https://www.example.com/pricing",
+      "device": "MOBILE",
+      "clicks": 10,
+      "impressions": 500,
+      "position": 9
+    },
+    {
+      "page": "https://www.example.com/guide",
+      "device": "DESKTOP",
+      "clicks": 45,
+      "impressions": 300,
+      "position": 2
+    },
+    {
+      "page": "https://www.example.com/guide",
+      "device": "MOBILE",
+      "clicks": 81,
+      "impressions": 2700,
+      "position": 6
+    },
+    {
+      "page": "https://www.example.com/blog",
+      "device": "DESKTOP",
+      "clicks": 20,
+      "impressions": 100,
+      "position": 3
+    },
+    {
+      "page": "https://www.example.com/blog",
+      "device": "MOBILE",
+      "clicks": 9,
+      "impressions": 900,
+      "position": 11
+    },
+    {
+      "page": "https://www.example.com/faq",
+      "device": "DESKTOP",
+      "clicks": 16,
+      "impressions": 400,
+      "position": 5
+    },
+    {
+      "page": "https://www.example.com/faq",
+      "device": "MOBILE",
+      "clicks": 2,
+      "impressions": 100,
+      "position": 8
+    }
+  ],
+  "inspections": {
+    "https://www.example.com/": {
+      "verdict": "PASS",
+      "coverageState": "Submitted and indexed",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "INDEXING_ALLOWED",
+      "pageFetchState": "SUCCESSFUL",
+      "lastCrawlTime": "2026-09-08T12:00:00Z",
+      "googleCanonical": "https://www.example.com/",
+      "userCanonical": "https://www.example.com/"
+    },
+    "https://www.example.com/docs": {
+      "verdict": "NEUTRAL",
+      "coverageState": "Alternate page with proper canonical tag",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "INDEXING_ALLOWED",
+      "pageFetchState": "SUCCESSFUL",
+      "lastCrawlTime": "2026-09-08T12:00:00Z",
+      "googleCanonical": "https://www.example.com/documentation",
+      "userCanonical": "https://www.example.com/docs"
+    },
+    "https://www.example.com/pricing": {
+      "verdict": "FAIL",
+      "coverageState": "Excluded by noindex tag",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "BLOCKED_BY_META_TAG",
+      "pageFetchState": "SUCCESSFUL",
+      "lastCrawlTime": "2026-09-08T12:00:00Z",
+      "googleCanonical": "https://www.example.com/pricing",
+      "userCanonical": "https://www.example.com/pricing"
+    },
+    "https://www.example.com/guide": {
+      "verdict": "FAIL",
+      "coverageState": "Excluded by noindex tag",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "BLOCKED_BY_META_TAG",
+      "pageFetchState": "SUCCESSFUL",
+      "lastCrawlTime": "2026-09-08T12:00:00Z",
+      "googleCanonical": "https://www.example.com/guide",
+      "userCanonical": "https://www.example.com/guide"
+    },
+    "https://www.example.com/blog": {
+      "verdict": "PASS",
+      "coverageState": "Submitted and indexed",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "INDEXING_ALLOWED",
+      "pageFetchState": "SUCCESSFUL",
+      "lastCrawlTime": "2026-09-08T12:00:00Z",
+      "googleCanonical": "https://www.example.com/blog",
+      "userCanonical": "https://www.example.com/blog"
+    },
+    "https://www.example.com/faq": {
+      "verdict": "PASS",
+      "coverageState": "Submitted and indexed",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "INDEXING_ALLOWED",
+      "pageFetchState": "SUCCESSFUL",
+      "lastCrawlTime": "2026-09-08T12:00:00Z",
+      "googleCanonical": "https://www.example.com/faq",
+      "userCanonical": "https://www.example.com/faq"
+    }
+  }
+}
