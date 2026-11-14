@@ -704,14 +704,20 @@ def _documented_examples() -> list[tuple[str, str]]:
 
 
 #: Graders whose check_sql reads a table the prompt tells the agent to save:
-#: task name → (that table, a right answer, a wrong answer). Each check is run
-#: against both, so it is shown to pass the one and fail the other.
+#: task name → (that table, a right answer, wrong answers). Each check is run
+#: against all of them, so it is shown to pass the one and fail the others.
 ANSWER_TABLE_GRADERS = {
     "idle_properties": (
         "idle_properties",
         # Every readable property: the fake has no data in the default 28 days.
         "SELECT site_url FROM gsc.main.sites WHERE permission_level <> 'siteUnverifiedUser'",
-        "SELECT site_url FROM gsc.main.sites",
+        [
+            # An extra property (the unverified one).
+            "SELECT site_url FROM gsc.main.sites",
+            # A missing property.
+            "SELECT site_url FROM gsc.main.sites WHERE permission_level <> 'siteUnverifiedUser' "
+            "AND property_type = 'url_prefix'",
+        ],
     ),
 }
 
@@ -791,13 +797,13 @@ class TestCatalogExamples:
 
     @pytest.mark.parametrize("name", sorted(ANSWER_TABLE_GRADERS))
     def test_answer_table_checks_tell_right_from_wrong(self, con: Any, name: str) -> None:
-        table, right, wrong = ANSWER_TABLE_GRADERS[name]
+        table, right, wrongs = ANSWER_TABLE_GRADERS[name]
         check = next(g["check_sql"] for g in _graders() if g["name"] == name)
         verdicts = []
         try:
-            for answer in (right, wrong):
+            for answer in (right, *wrongs):
                 con.execute(f"CREATE OR REPLACE TEMP TABLE {table} AS {answer}")
                 verdicts.append(rows(con, check))
         finally:
             con.execute(f"DROP TABLE IF EXISTS {table}")
-        assert verdicts == [[(True,)], [(False,)]]
+        assert verdicts == [[(True,)]] + [[(False,)]] * len(wrongs)
