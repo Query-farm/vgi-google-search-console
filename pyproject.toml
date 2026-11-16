@@ -13,12 +13,12 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Database",
     "Topic :: Internet :: WWW/HTTP :: Site Management",
     "Typing :: Typed",
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     # The SDK's filter evaluator requires DuckDB 1.5.5. Haybarn 2.0 is used
     # separately as the VGI 3 client in tests, not as the worker's evaluator.
@@ -74,7 +74,7 @@ prerelease = "if-necessary-or-explicit"
 
 [tool.ruff]
 line-length = 110
-target-version = "py313"
+target-version = "py314"
 
 # Selected explicitly rather than left to the default set, which changes between
 # ruff releases, so CI and a developer's shell reach the same conclusion.
@@ -104,7 +104,7 @@ ignore = [
 convention = "google"
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 strict = true
 packages = ["vgi_google_search_console"]
 

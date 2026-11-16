@@ -139,13 +139,13 @@ class Settings:
             return cls()
         try:
             raw = json.loads(data.decode())
-        except (UnicodeDecodeError, json.JSONDecodeError):
+        except UnicodeDecodeError, json.JSONDecodeError:
             return cls()
         if not isinstance(raw, dict):
             return cls()
         try:
             decoded = cls.from_options(raw)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             if str(raw.get("credentials")).strip().lower() == OAUTH:
                 raise ValueError("Invalid OAuth attachment; detach and attach again") from None
             return cls()
