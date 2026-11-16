@@ -18,6 +18,8 @@ env:
   # resolves from PyPI. This pins that shut: if a local path source is ever
   # added, CI still proves the *published* dependencies are sufficient.
   UV_NO_SOURCES: "1"
+  # The SQL test runner; matches HAYBARN_VERSION in the Makefile.
+  HAYBARN_VERSION: "2.0.0rc11"
 
 jobs:
   oauth:
@@ -58,6 +60,41 @@ jobs:
         run: |
           uv run --no-project gsc_worker.py --help > /dev/null
           uv run --no-project serve.py --help > /dev/null
+
+
+  integration:
+    # The SQL suite (test/sql/*.test) through DuckDB's sqllogictest runner and the
+    # signed community vgi extension, against the offline fake (tests/fake_gsc.py via
+    # test/mock_api/server.py): no credentials and no Google traffic.
+    name: SQL tests (${{ matrix.os }}, ${{ matrix.transport }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        transport: [stdio, launch, http]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.14"
+          enable-cache: true
+      - name: Build the worker
+        run: uv sync --no-sources --locked
+      - name: Install the SQL test runner
+        run: |
+          uv venv .tools
+          uv pip install -p .tools "haybarn-unittest==${{ env.HAYBARN_VERSION }}"
+      - name: Run test/sql over ${{ matrix.transport }}
+        run: |
+          WORKER="$PWD/.venv/bin/vgi-google-search-console" \
+          HAYBARN_UNITTEST="$PWD/.tools/bin/haybarn-unittest" \
+          PYTHON="$PWD/.venv/bin/python" \
+          TRANSPORT=${{ matrix.transport }} ci/run-integration.sh
 
   catalog:
     name: Catalog metadata (vgi-lint, structural)

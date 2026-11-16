@@ -1,0 +1,140 @@
+# name: test/sql/gsc_errors.test
+# description: Argument, credential and ATTACH-option errors against tests/fake_gsc.py
+# group: [google_search_console]
+
+require vgi
+
+require-env VGI_GOOGLE_SEARCH_CONSOLE_WORKER
+
+require-env VGI_GOOGLE_SEARCH_CONSOLE_MOCK_API
+
+# Aimed at the offline fake through ATTACH options; page_size 10 makes a modest
+# synthetic result span several pages (and several process() ticks).
+statement ok
+ATTACH 'gsc' (TYPE vgi, LOCATION '{VGI_GOOGLE_SEARCH_CONSOLE_WORKER}', api_url '{VGI_GOOGLE_SEARCH_CONSOLE_MOCK_API}', page_size 10);
+
+# The fake accepts exactly this fixture token; it is not a Google credential.
+statement ok
+CREATE SECRET my_gsc (TYPE google_search_console, access_token 'test-token');
+
+# ---------------------------------- search_analytics() mistakes fail at bind
+
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['querry']);
+----
+not a Search Console dimension
+
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['clicks']);
+----
+is a metric
+
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['date', 'date']);
+----
+requested twice
+
+statement error
+SELECT * FROM gsc.main.search_analytics('example.com');
+----
+sc-domain:example.com
+
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', start_date => 'last week');
+----
+does not match the required pattern
+
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', start_date => '2026-09-10', end_date => '2026-09-01');
+----
+is after end_date
+
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['hour']);
+----
+hourly_all
+
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', filters => '{');
+----
+not valid JSON
+
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', filters => '[{"dimension": "date", "expression": "x"}]');
+----
+cannot filter on 'date'
+
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', search_type => 'maps');
+----
+maps
+
+# The site must be a literal; '' is the way to walk every site.
+statement error
+SELECT * FROM gsc.main.search_analytics((SELECT site_url FROM gsc.main.sites LIMIT 1));
+----
+subquer
+
+# Google's own refusal comes through.
+statement error
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['search_appearance', 'query']);
+----
+cannot be grouped with other dimensions
+
+statement error
+SELECT * FROM gsc.main.search_analytics('https://locked.example/', start_date => '2026-09-01', end_date => '2026-09-28');
+----
+Users and permissions
+
+# ----------------------------------------------------------------- credentials
+
+query I
+SELECT count(*) FROM duckdb_secrets() WHERE name = 'my_gsc' AND secret_string LIKE '%test-token%';
+----
+0
+
+statement ok
+CREATE OR REPLACE SECRET my_gsc (TYPE google_search_console, access_token 'wrong');
+
+statement error
+SELECT * FROM gsc.main.sitemaps('sc-domain:example.com');
+----
+401
+
+statement ok
+DROP SECRET my_gsc;
+
+# No secret, and overriding api_url rules out the ADC fallback.
+statement error
+SELECT * FROM gsc.main.sites;
+----
+CREATE SECRET
+
+statement ok
+CREATE SECRET my_gsc (TYPE google_search_console, access_token 'test-token');
+
+query I
+SELECT count(*) FROM gsc.main.sites;
+----
+4
+
+# ------------------------------------------------- bad ATTACH options fail
+
+# The worker exposes one catalog, named gsc, so free the name first.
+statement ok
+DETACH gsc;
+
+statement error
+ATTACH 'gsc' (TYPE vgi, LOCATION '{VGI_GOOGLE_SEARCH_CONSOLE_WORKER}', credentials 'required');
+----
+not one of auto, secret
+
+statement error
+ATTACH 'gsc' (TYPE vgi, LOCATION '{VGI_GOOGLE_SEARCH_CONSOLE_WORKER}', page_size 0);
+----
+between 1 and 25000
+
+statement error
+ATTACH 'gsc' (TYPE vgi, LOCATION '{VGI_GOOGLE_SEARCH_CONSOLE_WORKER}', api_url 'file:///etc/passwd');
+----
+http

@@ -1,0 +1,123 @@
+# name: test/sql/gsc_catalog.test
+# description: Catalog listing, the sites table and sitemaps() against tests/fake_gsc.py
+# group: [google_search_console]
+
+require vgi
+
+require-env VGI_GOOGLE_SEARCH_CONSOLE_WORKER
+
+require-env VGI_GOOGLE_SEARCH_CONSOLE_MOCK_API
+
+# Aimed at the offline fake through ATTACH options; page_size 10 makes a modest
+# synthetic result span several pages (and several process() ticks).
+statement ok
+ATTACH 'gsc' (TYPE vgi, LOCATION '{VGI_GOOGLE_SEARCH_CONSOLE_WORKER}', api_url '{VGI_GOOGLE_SEARCH_CONSOLE_MOCK_API}', page_size 10);
+
+# The fake accepts exactly this fixture token; it is not a Google credential.
+statement ok
+CREATE SECRET my_gsc (TYPE google_search_console, access_token 'test-token');
+
+# ------------------------------------------------------------ catalog listing
+
+query T
+SELECT table_name FROM duckdb_tables() WHERE database_name = 'gsc' ORDER BY ALL;
+----
+sites
+
+query T
+SELECT DISTINCT function_name FROM duckdb_functions() WHERE database_name = 'gsc' AND function_type = 'table' ORDER BY ALL;
+----
+all_sites
+search_analytics
+sitemaps
+url_inspection
+
+query TT
+SELECT constraint_type, constraint_column_names FROM duckdb_constraints()
+WHERE database_name = 'gsc' AND table_name = 'sites' ORDER BY constraint_type;
+----
+NOT NULL	[site_url]
+PRIMARY KEY	[site_url]
+
+query T
+SELECT column_name FROM duckdb_columns() WHERE database_name = 'gsc' AND table_name = 'sites' AND NOT is_nullable;
+----
+site_url
+
+# ------------------------------------------------------------------- sites
+
+query TTT
+SELECT site_url, permission_level, property_type FROM gsc.main.sites ORDER BY 1;
+----
+https://locked.example/	siteRestrictedUser	url_prefix
+https://unverified.example/	siteUnverifiedUser	url_prefix
+https://www.example.com/	siteFullUser	url_prefix
+sc-domain:example.com	siteOwner	domain
+
+query I
+SELECT (SELECT count(*) FROM gsc.main.sites) = (SELECT count(*) FROM gsc.main.all_sites());
+----
+true
+
+query T
+SELECT site_url FROM gsc.main.sites WHERE property_type = 'domain';
+----
+sc-domain:example.com
+
+query I
+SELECT count(*) FROM gsc.main.sites WHERE site_url LIKE 'ftp%';
+----
+0
+
+# ---------------------------------------------------------------- sitemaps()
+
+query TTTIIT
+SELECT path, is_sitemaps_index, is_pending, warnings, errors, typeof(last_submitted)
+FROM gsc.main.sitemaps('sc-domain:example.com') ORDER BY path;
+----
+https://www.example.com/broken.xml	false	true	2	3	TIMESTAMP WITH TIME ZONE
+https://www.example.com/sitemap.xml	true	false	0	0	TIMESTAMP WITH TIME ZONE
+
+query T
+SELECT last_downloaded IS NULL FROM gsc.main.sitemaps('sc-domain:example.com') WHERE path LIKE '%broken%';
+----
+true
+
+query TI
+SELECT c.type, sum(c.submitted) FROM (SELECT unnest(contents) AS c FROM gsc.main.sitemaps('sc-domain:example.com')) GROUP BY 1 ORDER BY 1;
+----
+image	7
+web	160
+
+# '' walks every site, stepping over the one that refuses (and never asking the unverified one).
+query TI
+SELECT site_url, count(*) FROM gsc.main.sitemaps('') GROUP BY 1;
+----
+sc-domain:example.com	2
+
+query I
+SELECT count(*) FROM gsc.main.sitemaps('') WHERE site_url = 'sc-domain:example.com';
+----
+2
+
+query T
+SELECT path FROM gsc.main.sitemaps('sc-domain:example.com', sitemap_index => 'https://www.example.com/sitemap.xml');
+----
+https://www.example.com/sitemap-pages.xml
+
+query T
+SELECT s.site_url FROM gsc.main.sites s WHERE s.permission_level <> 'siteUnverifiedUser'
+AND s.site_url NOT IN (SELECT site_url FROM gsc.main.sitemaps('')) ORDER BY 1;
+----
+https://locked.example/
+https://www.example.com/
+
+statement error
+SELECT * FROM gsc.main.sitemaps('https://locked.example/');
+----
+Users and permissions
+
+statement error
+SELECT * FROM gsc.main.sitemaps('', sitemap_index => 'https://x.example/s.xml');
+----
+pass that site_url too

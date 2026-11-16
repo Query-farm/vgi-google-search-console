@@ -16,3 +16,6 @@ venv/
 
 # vgi-lint baselines are per-machine unless deliberately committed
 .vgi-lint-baseline*.json
+
+# SQL test runner (make tools)
+.tools/

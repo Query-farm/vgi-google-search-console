@@ -1,0 +1,87 @@
+# name: test/sql/gsc_url_inspection.test
+# description: url_inspection() against tests/fake_gsc.py, literal and LATERAL
+# group: [google_search_console]
+
+require vgi
+
+require-env VGI_GOOGLE_SEARCH_CONSOLE_WORKER
+
+require-env VGI_GOOGLE_SEARCH_CONSOLE_MOCK_API
+
+# Aimed at the offline fake through ATTACH options; page_size 10 makes a modest
+# synthetic result span several pages (and several process() ticks).
+statement ok
+ATTACH 'gsc' (TYPE vgi, LOCATION '{VGI_GOOGLE_SEARCH_CONSOLE_WORKER}', api_url '{VGI_GOOGLE_SEARCH_CONSOLE_MOCK_API}', page_size 10);
+
+# The fake accepts exactly this fixture token; it is not a Google credential.
+statement ok
+CREATE SECRET my_gsc (TYPE google_search_console, access_token 'test-token');
+
+query TTTTTTTT
+SELECT site_url, inspection_url, verdict, coverage_state, crawled_as, sitemaps, rich_results_verdict, rich_result_types
+FROM gsc.main.url_inspection('sc-domain:example.com', 'https://www.example.com/');
+----
+sc-domain:example.com	https://www.example.com/	PASS	Submitted and indexed	MOBILE	['https://www.example.com/sitemap.xml']	PARTIAL	[Breadcrumbs, FAQ]
+
+query TTT
+SELECT i.rich_result_type, i.item_name, i.severity
+FROM (SELECT unnest(rich_result_issues) AS i FROM gsc.main.url_inspection('sc-domain:example.com', 'https://www.example.com/'));
+----
+FAQ	Pricing FAQ	WARNING
+
+query TTT
+SELECT amp_verdict, amp_issues[1].severity, last_crawl_time IS NULL
+FROM gsc.main.url_inspection('sc-domain:example.com', 'https://www.example.com/pricing');
+----
+FAIL	ERROR	true
+
+# search_analytics feeds both of url_inspection's arguments under LATERAL.
+query TTT
+SELECT p.page, i.inspection_url, i.verdict
+FROM (SELECT site_url, page FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['page'], start_date => '2026-09-01', end_date => '2026-09-28')) p,
+     LATERAL gsc.main.url_inspection(p.site_url, p.page) i
+ORDER BY p.page;
+----
+https://www.example.com/	https://www.example.com/	PASS
+https://www.example.com/docs	https://www.example.com/docs	NEUTRAL
+https://www.example.com/pricing	https://www.example.com/pricing	FAIL
+
+query T
+SELECT t.u FROM (VALUES ('https://www.example.com/'), ('https://www.example.com/docs')) t(u),
+     LATERAL gsc.main.url_inspection('sc-domain:example.com', t.u) i
+WHERE i.google_canonical IS DISTINCT FROM i.user_canonical;
+----
+https://www.example.com/docs
+
+query TTT
+SELECT t.s, t.u, i.verdict
+FROM (VALUES ('sc-domain:example.com', 'https://www.example.com/docs'), ('https://www.example.com/', 'https://www.example.com/')) t(s, u),
+     LATERAL gsc.main.url_inspection(t.s, t.u) i ORDER BY 2;
+----
+https://www.example.com/	https://www.example.com/	PASS
+sc-domain:example.com	https://www.example.com/docs	NEUTRAL
+
+query I
+SELECT count(*) FROM (VALUES (NULL::VARCHAR)) t(u), LATERAL gsc.main.url_inspection('sc-domain:example.com', t.u) i;
+----
+0
+
+query T
+SELECT verdict FROM gsc.main.url_inspection('sc-domain:example.com', 'https://www.example.com/', language_code => 'de-DE');
+----
+PASS
+
+statement error
+SELECT * FROM gsc.main.url_inspection('sc-domain:example.com', 'https://elsewhere.example/');
+----
+not part of this property
+
+statement error
+SELECT * FROM gsc.main.url_inspection('sc-domain:example.com', '/pricing');
+----
+not a URL to inspect
+
+statement error
+SELECT * FROM gsc.main.url_inspection('example.com', 'https://www.example.com/');
+----
+sc-domain:example.com

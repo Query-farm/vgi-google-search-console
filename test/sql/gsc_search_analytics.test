@@ -1,0 +1,264 @@
+# name: test/sql/gsc_search_analytics.test
+# description: search_analytics() against tests/fake_gsc.py: types, paging, dimensions, filters, date pushdown, every-site walks
+# group: [google_search_console]
+
+require vgi
+
+require-env VGI_GOOGLE_SEARCH_CONSOLE_WORKER
+
+require-env VGI_GOOGLE_SEARCH_CONSOLE_MOCK_API
+
+# Aimed at the offline fake through ATTACH options; page_size 10 makes a modest
+# synthetic result span several pages (and several process() ticks).
+statement ok
+ATTACH 'gsc' (TYPE vgi, LOCATION '{VGI_GOOGLE_SEARCH_CONSOLE_WORKER}', api_url '{VGI_GOOGLE_SEARCH_CONSOLE_MOCK_API}', page_size 10);
+
+# The fake accepts exactly this fixture token; it is not a Google credential.
+statement ok
+CREATE SECRET my_gsc (TYPE google_search_console, access_token 'test-token');
+
+# The fake's whole fact table spans 2026-09-01..28, so every query pins that range.
+
+query TTTTTTT
+SELECT typeof(site_url), typeof(date), typeof(query), typeof(clicks), typeof(impressions), typeof(ctr), typeof(position)
+FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['date', 'query'], start_date => '2026-09-01', end_date => '2026-09-28') LIMIT 1;
+----
+VARCHAR	DATE	VARCHAR	BIGINT	BIGINT	DOUBLE	DOUBLE
+
+# No dimensions: one total row.
+query TII
+SELECT site_url, clicks, impressions FROM gsc.main.search_analytics('sc-domain:example.com', start_date => '2026-09-01', end_date => '2026-09-28');
+----
+sc-domain:example.com	15121	166330
+
+query ITTI
+SELECT count(*), min(date), max(date), sum(clicks)
+FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['date'], start_date => '2026-09-01', end_date => '2026-09-28');
+----
+28	2026-09-01	2026-09-28	15121
+
+query T
+SELECT column_name FROM (DESCRIBE SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['device', 'country']));
+----
+site_url
+device
+country
+clicks
+impressions
+ctr
+position
+
+# 36 groups at page_size 10: four pages plus the empty one that ends the walk.
+query II
+SELECT count(*), count(DISTINCT (query, page, country))
+FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['query', 'page', 'country'], start_date => '2026-09-01', end_date => '2026-09-28');
+----
+36	36
+
+query I
+SELECT count(*) FROM (SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['query', 'page', 'country'], start_date => '2026-09-01', end_date => '2026-09-28') LIMIT 3);
+----
+3
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['query', 'page', 'country'], start_date => '2026-09-01', end_date => '2026-09-28', max_rows => 15);
+----
+15
+
+# Rows arrive sorted by clicks, as Google returns them.
+query TIIRR
+SELECT query, clicks, impressions, round(ctr, 6), round(position, 6)
+FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['query'], start_date => '2026-09-01', end_date => '2026-09-28');
+----
+duckdb extension	3786	41640	0.090922	4.992795
+duckdb	3781	41590	0.090911	4.995432
+vgi worker	3780	41580	0.090909	5.013949
+arrow flight	3774	41520	0.090896	4.992775
+
+query TI
+SELECT device, clicks FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['device'], start_date => '2026-09-01', end_date => '2026-09-28') ORDER BY 1;
+----
+DESKTOP	5050
+MOBILE	5033
+TABLET	5038
+
+# hour is an instant: midnight PDT on the first is 07:00 UTC.
+query TT
+SELECT typeof(hour), min(hour) AT TIME ZONE 'UTC'
+FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['hour'], start_date => '2026-09-01', end_date => '2026-09-01', data_state => 'hourly_all')
+GROUP BY 1;
+----
+TIMESTAMP WITH TIME ZONE	2026-09-01 07:00:00
+
+query TI
+SELECT search_appearance, clicks FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['search_appearance'], start_date => '2026-09-01', end_date => '2026-09-28') ORDER BY clicks DESC;
+----
+VIDEO	30
+AMP_BLUE_LINK	12
+
+query TI
+SELECT search_appearance, clicks FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['searchAppearance'], start_date => '2026-09-01', end_date => '2026-09-28') ORDER BY clicks DESC;
+----
+VIDEO	30
+AMP_BLUE_LINK	12
+
+# Image search only knows the first query in the fake.
+query T
+SELECT DISTINCT query FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['query'], start_date => '2026-09-01', end_date => '2026-09-28', search_type => 'image');
+----
+duckdb
+
+statement ok
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', start_date => '2026-09-01', end_date => '2026-09-28', search_type => 'google_news');
+
+# Discover has no ranking.
+query R
+SELECT position FROM gsc.main.search_analytics('sc-domain:example.com', start_date => '2026-09-01', end_date => '2026-09-28', search_type => 'discover');
+----
+NULL
+
+statement ok
+SELECT * FROM gsc.main.search_analytics('sc-domain:example.com', start_date => '2026-09-01', end_date => '2026-09-28', aggregation_type => 'by_page', data_state => 'all');
+
+# filters => on dimensions that are not selected, in snake_case operators.
+query I
+SELECT sum(clicks) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['device'], start_date => '2026-09-01', end_date => '2026-09-28',
+    filters => '[{"dimension": "country", "operator": "equals", "expression": "usa"}, {"dimension": "query", "operator": "not_contains", "expression": "arrow"}]');
+----
+3783
+
+# ------------------------------------------------ WHERE (filter pushdown)
+
+query T
+SELECT DISTINCT country FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE country = 'deu';
+----
+deu
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28')
+WHERE device = 'MOBILE' AND page = 'https://www.example.com/docs';
+----
+3
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE country = 'USA';
+----
+0
+
+query T
+SELECT DISTINCT country FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28')
+WHERE country IN ('deu', 'gbr') ORDER BY 1;
+----
+deu
+gbr
+
+query T
+SELECT DISTINCT page FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28')
+WHERE page LIKE '%/docs' ORDER BY 1;
+----
+https://www.example.com/docs
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE country = 'zzz';
+----
+0
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE clicks > 999999999;
+----
+0
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE device <> device;
+----
+0
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE ctr > 1;
+----
+0
+
+query I
+SELECT sum(clicks) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['country', 'device', 'page'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE device = 'TABLET';
+----
+5038
+
+# ------------------------------------------------------- date pushdown
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['date'], start_date => '2026-09-01', end_date => '2026-09-28')
+WHERE date >= DATE '2026-09-10' AND date <= DATE '2026-09-12';
+----
+3
+
+query TT
+SELECT min(date), max(date) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['date'], start_date => '2026-09-01', end_date => '2026-09-28')
+WHERE date > DATE '2026-09-10' AND date < DATE '2026-09-13';
+----
+2026-09-11	2026-09-12
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['date'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE date >= DATE '2020-01-01';
+----
+28
+
+query T
+SELECT date FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['date'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE date = DATE '2026-09-05';
+----
+2026-09-05
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('sc-domain:example.com', dimensions => ['date'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE date > DATE '2027-01-01';
+----
+0
+
+# -------------------------------------- '' walks every readable property
+
+query TI
+SELECT site_url, clicks FROM gsc.main.search_analytics('', start_date => '2026-09-01', end_date => '2026-09-28') ORDER BY site_url;
+----
+https://www.example.com/	15121
+sc-domain:example.com	15121
+
+query TI
+SELECT site_url, count(*) FROM gsc.main.search_analytics('', dimensions => ['query', 'page'], start_date => '2026-09-01', end_date => '2026-09-28') GROUP BY 1 ORDER BY 1;
+----
+https://www.example.com/	12
+sc-domain:example.com	12
+
+query TI
+SELECT site_url, count(*) FROM gsc.main.search_analytics('', dimensions => ['query', 'page'], start_date => '2026-09-01', end_date => '2026-09-28', max_rows => 4) GROUP BY 1 ORDER BY 1;
+----
+https://www.example.com/	4
+sc-domain:example.com	4
+
+query I
+SELECT count(*) FROM gsc.main.search_analytics('', dimensions => ['date'], start_date => '2026-09-01', end_date => '2026-09-28') WHERE site_url = 'sc-domain:example.com';
+----
+28
+
+query T
+SELECT DISTINCT site_url FROM gsc.main.search_analytics('', start_date => '2026-09-01', end_date => '2026-09-28') WHERE site_url IN ('sc-domain:example.com', 'sc-domain:nowhere.example');
+----
+sc-domain:example.com
+
+query T
+SELECT DISTINCT site_url FROM gsc.main.search_analytics('', start_date => '2026-09-01', end_date => '2026-09-28') WHERE site_url LIKE 'sc-domain:%';
+----
+sc-domain:example.com
+
+query TI
+SELECT s.permission_level, a.clicks FROM gsc.main.sites s JOIN gsc.main.search_analytics('', start_date => '2026-09-01', end_date => '2026-09-28') a USING (site_url) ORDER BY 1;
+----
+siteFullUser	15121
+siteOwner	15121
+
+query TTI
+SELECT s.site_url, s.property_type, coalesce(sum(a.clicks), 0)
+FROM gsc.main.sites s LEFT JOIN gsc.main.search_analytics('', start_date => '2026-09-01', end_date => '2026-09-28') a USING (site_url)
+GROUP BY ALL ORDER BY ALL;
+----
+https://locked.example/	url_prefix	0
+https://unverified.example/	url_prefix	0
+https://www.example.com/	url_prefix	15121
+sc-domain:example.com	domain	15121
