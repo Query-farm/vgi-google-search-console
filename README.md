@@ -71,10 +71,10 @@ working directory, so it only works from inside the clone. Anywhere else, point
 
 ```sql
 ATTACH 'gsc' (TYPE vgi,
-  LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-google-search-console@v0.1.0 vgi-google-search-console');
+  LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-google-search-console@v0.1.1 vgi-google-search-console');
 ```
 
-The `@v0.1.0` tag pins the release, so the worker cannot change under you.
+The `@v0.1.1` tag pins the release, so the worker cannot change under you.
 
 [Haybarn](https://query.farm) 2.0.0rc11 or newer ships the compatible `vgi.v3`
 extension. The client and worker must both use VGI 3; older VGI 2 extensions
