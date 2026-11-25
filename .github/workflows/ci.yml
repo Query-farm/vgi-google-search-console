@@ -19,7 +19,7 @@ env:
   # added, CI still proves the *published* dependencies are sufficient.
   UV_NO_SOURCES: "1"
   # The SQL test runner; matches HAYBARN_VERSION in the Makefile.
-  HAYBARN_VERSION: "2.0.0rc11"
+  HAYBARN_VERSION: "2.0.1rc3"
 
 jobs:
   oauth:
@@ -112,5 +112,5 @@ jobs:
       # Use the project's engine so the client and worker wire versions match.
       - name: vgi-lint (structural)
         run: >
-          uv run --no-sources --with vgi-lint-check==2.0.0 vgi-lint lint "uv run --no-sources gsc_worker.py"
+          uv run --no-sources --prerelease=allow --with 'vgi-lint-check>=2.9.0,<3' vgi-lint lint "uv run --no-sources gsc_worker.py"
           --no-execute --no-check-links --audit-waivers --fail-on warning

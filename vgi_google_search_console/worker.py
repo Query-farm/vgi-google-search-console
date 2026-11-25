@@ -297,6 +297,9 @@ _CATALOG_TAGS = {
     "provider": "google-search-console",
     "domain": "search-analytics",
     "vgi.title": "Google Search Console",
+    "vgi.subtitle": (
+        "Search clicks, impressions, CTR and rankings for the sites you manage in Google Search Console."
+    ),
     "vgi.source_url": SOURCE_URL,
     "vgi.author": "Query Farm LLC <hello@query.farm>",
     "vgi.copyright": (

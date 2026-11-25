@@ -71,15 +71,17 @@ working directory, so it only works from inside the clone. Anywhere else, point
 
 ```sql
 ATTACH 'gsc' (TYPE vgi,
-  LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-google-search-console@v0.1.1 vgi-google-search-console');
+  LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-google-search-console@v0.2.0 vgi-google-search-console');
 ```
 
-The `@v0.1.1` tag pins the release, so the worker cannot change under you.
+The `@v0.2.0` tag pins the release, so the worker cannot change under you.
 
-[Haybarn](https://query.farm) 2.0.0rc11 or newer ships the compatible `vgi.v3`
+[Haybarn](https://query.farm) 2.0.1 or newer ships the compatible `vgi.v3`
 extension. The client and worker must both use VGI 3; older VGI 2 extensions
 cannot attach this worker. The worker uses a separate DuckDB 1.5.5 environment
 for filter evaluation, provisioned automatically by the script headers or `uvx`.
+
+vgi-google-search-console 0.2.0 speaks VGI protocol 3.4, so it needs Haybarn 2.0.1 or newer (Haybarn 2.0.0 loads a 3.3 `vgi` extension that cannot attach it).
 
 ## Credentials
 
@@ -521,7 +523,7 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy                               # strict
 uv run pytest                             # offline: unit + SQL end-to-end against a fake API
 uv run pytest -m live                     # against real Search Console (see below)
-uv run --no-sources --with vgi-lint-check==2.0.0 vgi-lint lint "uv run --no-sources gsc_worker.py" \
+uv run --no-sources --prerelease=allow --with 'vgi-lint-check>=2.9.0,<3' vgi-lint lint "uv run --no-sources gsc_worker.py" \
     --no-execute --no-check-links --audit-waivers --fail-on warning
 ```
 

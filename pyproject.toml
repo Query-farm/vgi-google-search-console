@@ -22,7 +22,7 @@ requires-python = ">=3.14"
 dependencies = [
     # The SDK's filter evaluator requires DuckDB 1.5.5. Haybarn 2.0 is used
     # separately as the VGI 3 client in tests, not as the worker's evaluator.
-    "vgi-python[http,duckdb]>=0.52.2,<0.53",
+    "vgi-python[http,duckdb]>=0.55.2,<0.56",
     "httpx>=0.27",
     # Token minting only — service-account JWT assertions, refresh-token grants
     # and Application Default Credentials discovery. Its own HTTP calls are
@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-serve = ["vgi-python[http,duckdb,oauth]>=0.52.2,<0.53", "vgi-rpc[sentry]>=0.53.1"]
+serve = ["vgi-python[http,duckdb,oauth]>=0.55.2,<0.56", "vgi-rpc[sentry]>=0.53.1"]
 
 [dependency-groups]
 dev = [
@@ -42,7 +42,7 @@ dev = [
     "ruff>=0.16,<0.17",
     "mypy>=1.18",
     # The SQL client needs the VGI 3 extension; workers run in isolated environments.
-    "haybarn>=2.0.0rc11,<2.1",
+    "haybarn>=2.0.1rc3,<2.1",
     # DuckDB materializes TIMESTAMP WITH TIME ZONE through pytz.
     "pytz>=2024.1",
     "pyyaml>=6.0.3",

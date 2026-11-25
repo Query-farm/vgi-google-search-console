@@ -1,7 +1,7 @@
 # Common tasks. `make help` lists them. Requires uv (https://docs.astral.sh/uv/).
 # The SQL test targets follow the vgi-starters python template.
 
-HAYBARN_VERSION ?= 2.0.0rc11
+HAYBARN_VERSION ?= 2.0.1rc3
 WORKER          := $(CURDIR)/.venv/bin/vgi-google-search-console
 TOOLS           := $(CURDIR)/.tools
 HAYBARN_UNITTEST := $(TOOLS)/bin/haybarn-unittest

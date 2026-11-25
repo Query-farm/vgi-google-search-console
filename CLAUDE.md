@@ -11,7 +11,7 @@ README.md is the user documentation; this file is for working on the code.
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                       # strict
 uv run pytest                     # offline, ~15s, includes the SQL end-to-end tier
-uv run --no-sources --with vgi-lint-check==2.0.0 vgi-lint lint "uv run --no-sources gsc_worker.py" \
+uv run --no-sources --prerelease=allow --with 'vgi-lint-check>=2.9.0,<3' vgi-lint lint "uv run --no-sources gsc_worker.py" \
     --no-execute --no-check-links --audit-waivers --fail-on warning   # run FROM the repo root
 ```
 
